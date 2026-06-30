@@ -1,5 +1,8 @@
 # Transformers on Transformers
 
+Czech version: https://mar7mal.github.io/Transformers_on_Transformers
+English Version: https://mar7mal.github.io/Transformers_on_Transformers/index_en.html
+
 **An experiment in AI-driven creation of university-level educational materials.**
 
 ---
