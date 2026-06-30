@@ -1,0 +1,1767 @@
+<!doctype html><html lang="cs"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Úvod do problematiky architektur neuronových sítí, založených na transformerech</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<style>
+:root{
+  --t:#2b2f36; --muted:#5b6470; --bg:#f4f2ee; --card:#ffffff; --line:#e3ded5;
+  --user:#eef3f0; --userbar:#1D9E75; --asstbar:#c9c2b4; --accent:#1D9E75;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--t);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,"Noto Sans",sans-serif;
+  line-height:1.62;font-size:16.5px;}
+.wrap{max-width:840px;margin:0 auto;padding:40px 22px 120px;}
+header.doc{border-bottom:2px solid var(--t);padding-bottom:18px;margin-bottom:30px;}
+header.doc h1{font-size:29px;line-height:1.22;margin:0 0 10px;letter-spacing:-.01em;}
+header.doc .authors{font-size:16px;color:var(--t);margin:2px 0 8px;font-weight:600;}
+header.doc .sub{color:var(--muted);font-size:14.5px;}
+.prose p{margin:.7em 0;}
+h2.sec{font-size:23px;margin:1.7em 0 .5em;letter-spacing:-.01em;padding-top:6px;border-top:1px solid var(--line);}
+h2.sec .num{color:var(--accent);font-weight:800;margin-right:.4em;}
+h3.sub{font-size:18.5px;margin:1.25em 0 .35em;}
+h3.sub .num{color:var(--accent);font-weight:700;margin-right:.35em;}
+h4{font-size:16px;margin:1em 0 .3em;}
+.prose ul,.prose ol{margin:.6em 0;padding-left:1.4em;}
+.prose li{margin:.3em 0;}
+.prose code{background:#ece8e0;border:1px solid var(--line);border-radius:5px;
+  padding:.06em .35em;font-size:.9em;font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;}
+.prose strong{font-weight:680;}
+.smallnote{font-size:12.5px;color:var(--muted);line-height:1.5;border-left:2px solid var(--asstbar);
+  padding:2px 0 2px 12px;margin:8px 0;display:block;}
+.smallnote b{color:var(--t);font-weight:680;}
+figure.diagram{margin:22px 0;background:var(--card);border:1px solid var(--line);
+  border-radius:14px;padding:16px 16px 6px;box-shadow:0 1px 2px rgba(0,0,0,.04);}
+figure.diagram svg{display:block;width:100%;height:auto;max-width:760px;margin:0 auto;font-family:inherit;}
+figure.diagram figcaption{font-size:13.5px;color:var(--muted);margin:8px 4px 6px;line-height:1.5;text-align:left;}
+figure.diagram figcaption b{color:var(--t);font-weight:700;}
+svg .th{fill:var(--t);font-weight:600;font-size:14px;}
+svg .ts{fill:var(--muted);font-size:12px;}
+svg .t{fill:var(--t);font-size:13px;}
+svg .arr{fill:none;}
+svg text{fill:var(--t);}
+svg .c-teal{fill:#d7efe6;stroke:#1D9E75;}
+svg .c-amber{fill:#f7ead0;stroke:#D99A2B;}
+svg .c-coral{fill:#f8ded4;stroke:#D85A30;}
+svg .c-gray{fill:#ececec;stroke:#9AA0A6;}
+svg .c-teal rect,svg .c-amber rect,svg .c-coral rect,svg .c-gray rect{fill:inherit;stroke:inherit;}
+.toc{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 22px;margin-bottom:26px;}
+.toc h2{margin:.1em 0 .55em;font-size:17px;border:0;padding:0;}
+.toclist,.toclist ul{list-style:none;margin:0;padding:0;}
+.toclist>li{margin:.2em 0;font-size:14.5px;}
+.toclist ul{margin:.1em 0 .35em 0;}
+.toclist ul li{margin:.12em 0;font-size:13.5px;}
+.toc a{color:var(--t);text-decoration:none;display:flex;gap:.5em;align-items:baseline;}
+.toc ul ul a{color:var(--muted);}
+.toc a:hover{color:var(--accent);text-decoration:underline;}
+.toc .tn{color:var(--accent);font-weight:700;flex:0 0 auto;min-width:2.1em;}
+.toclist ul .tn{min-width:2.6em;}
+.note{color:var(--muted);font-size:14px;border-left:3px solid var(--asstbar);padding:6px 0 6px 14px;margin:18px 0;}
+.box{background:#fbfaf7;border:1px solid var(--line);border-left:4px solid var(--accent);
+  border-radius:8px;padding:12px 18px;margin:18px 0;}
+.box .lab{font-size:11.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);}
+.symtab{width:100%;border-collapse:collapse;font-size:13.5px;margin:8px 0;}
+.symtab th,.symtab td{border:1px solid var(--line);padding:5px 9px;text-align:left;vertical-align:top;}
+.symtab th{background:#efeae0;font-weight:700;}
+.symtab td:first-child{white-space:nowrap;font-weight:600;width:1%;}
+.refs{font-size:13.5px;color:var(--t);}
+.refs ol{padding-left:1.6em;}
+.refs li{margin:.45em 0;line-height:1.5;}
+.refs .rid{color:var(--accent);font-weight:700;}
+a.cit{color:var(--accent);text-decoration:none;font-weight:600;}
+/* ===== 3.8 „Máma mele maso" interaktivní příklad (scoped mm-) ===== */
+.mm{--mama:#b8467a;--mama-d:#8c2a54;--mama-bg:#f7e7ef;
+    --mele:#1D9E75;--mele-d:#155C44;--mele-bg:#e3f1ea;
+    --maso:#C77B16;--maso-d:#8C5A0C;--maso-bg:#f6ecd6;}
+.mm-mono{font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;}
+.mm-chip{font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;font-weight:600;
+  padding:1px 7px;border-radius:5px;white-space:nowrap;font-size:.9em;}
+.mm-c-mama{color:var(--mama-d);background:var(--mama-bg);}
+.mm-c-mele{color:var(--mele-d);background:var(--mele-bg);}
+.mm-c-maso{color:var(--maso-d);background:var(--maso-bg);}
+.mm-picker{display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin:4px 0 18px;}
+.mm-picker .mm-lab{font-family:"SF Mono",ui-monospace,monospace;font-size:12.5px;color:var(--muted);margin-right:2px;}
+.mm-tok{font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;font-weight:600;font-size:14px;cursor:pointer;
+  border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:6px 15px;color:var(--t);
+  transition:transform .12s ease,box-shadow .12s ease,border-color .12s;}
+.mm-tok:hover{transform:translateY(-1px);}
+.mm-tok[data-tok="0"].on{border-color:var(--mama);color:var(--mama-d);box-shadow:0 3px 0 -1px var(--mama);}
+.mm-tok[data-tok="1"].on{border-color:var(--mele);color:var(--mele-d);box-shadow:0 3px 0 -1px var(--mele);}
+.mm-tok[data-tok="2"].on{border-color:var(--maso);color:var(--maso-d);box-shadow:0 3px 0 -1px var(--maso);}
+.mm-shell{overflow-x:auto;padding-bottom:4px;}
+table.mm-attn{border-collapse:separate;border-spacing:6px;min-width:520px;margin:0 auto;}
+table.mm-attn th,table.mm-attn td{padding:0;}
+.mm-corner{font-family:"SF Mono",ui-monospace,monospace;font-size:11px;color:var(--muted);text-align:center;line-height:1.3;width:118px;}
+.mm-colhead,.mm-rowhead{font-family:"SF Mono",ui-monospace,monospace;font-weight:600;font-size:14px;text-align:center;padding:7px 11px;border-radius:8px;}
+.mm-h0{color:var(--mama-d);background:var(--mama-bg);}
+.mm-h1{color:var(--mele-d);background:var(--mele-bg);}
+.mm-h2{color:var(--maso-d);background:var(--maso-bg);}
+.mm-rowhead{min-width:96px;text-align:right;padding-right:13px;}
+td.mm-cell{width:112px;height:82px;border:1px solid var(--line);border-radius:10px;background:#fff;text-align:center;
+  vertical-align:middle;transition:transform .14s ease,box-shadow .14s ease,opacity .14s,background .14s;position:relative;}
+td.mm-cell .mm-expr{font-family:"SF Mono",ui-monospace,monospace;font-size:10.5px;color:var(--muted);display:block;margin-bottom:3px;letter-spacing:-.02em;}
+td.mm-cell .mm-wt{font-weight:700;font-size:22px;color:var(--t);}
+td.mm-cell .mm-raw{font-family:"SF Mono",ui-monospace,monospace;font-size:10px;color:var(--muted);display:block;margin-top:2px;}
+.mm-shell.dim td.mm-cell{opacity:.32;}
+.mm-shell.dim td.mm-cell.lit{opacity:1;}
+td.mm-cell.lit{transform:translateY(-2px);box-shadow:0 8px 18px -10px rgba(27,42,58,.45);border-color:transparent;}
+td.mm-cell.lit.r0{background:var(--mama-bg);} td.mm-cell.lit.r0 .mm-wt{color:var(--mama-d);}
+td.mm-cell.lit.r1{background:var(--mele-bg);} td.mm-cell.lit.r1 .mm-wt{color:var(--mele-d);}
+td.mm-cell.lit.r2{background:var(--maso-bg);} td.mm-cell.lit.r2 .mm-wt{color:var(--maso-d);}
+.mm-readout{margin:18px auto 0;max-width:600px;text-align:center;font-size:15px;color:var(--muted);min-height:30px;
+  background:#fff;border:1px dashed var(--line);border-radius:12px;padding:12px 16px;}
+.mm-readout b{color:var(--t);}
+.mm-bar{display:inline-block;height:9px;border-radius:5px;vertical-align:middle;margin:0 2px;}
+.mm-calc{background:#101c28;color:#eaf0f4;border-radius:12px;padding:18px 20px;margin:16px 0;
+  font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;font-size:14px;line-height:2;overflow-x:auto;}
+.mm-calc .q{color:#7fc7ff;} .mm-calc .v{color:#a6e3a1;} .mm-calc .dim{color:#9aa6b2;}
+.mm-calc .cap{display:block;margin-top:12px;color:#9aa6b2;font-size:12.5px;line-height:1.55;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;white-space:normal;}
+.mm-eq{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 18px;margin:14px 0;
+  font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;font-size:14.5px;overflow-x:auto;white-space:nowrap;}
+.mm-term{padding:1px 6px;border-radius:6px;}
+.mm-t0{background:var(--mama-bg);color:var(--mama-d);} .mm-t1{background:var(--mele-bg);color:var(--mele-d);} .mm-t2{background:var(--maso-bg);color:var(--maso-d);}
+table.mm-num{border-collapse:collapse;width:100%;min-width:420px;font-family:"SF Mono",ui-monospace,monospace;font-size:13.5px;margin:8px 0;}
+table.mm-num th,table.mm-num td{border-bottom:1px solid var(--line);padding:9px 11px;text-align:center;}
+table.mm-num th{font-weight:700;color:var(--muted);font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;}
+table.mm-num td.lbl{text-align:left;font-weight:600;}
+.mm-num .row-mama td.lbl{color:var(--mama-d);} .mm-num .row-mele td.lbl{color:var(--mele-d);} .mm-num .row-maso td.lbl{color:var(--maso-d);}
+.mm-numwrap{overflow-x:auto;}
+@media print{
+  body{background:#fff;font-size:11pt;}
+  .wrap{max-width:none;padding:0;}
+  figure.diagram{break-inside:avoid;box-shadow:none;}
+  h2.sec,h3.sub{break-after:avoid;}
+  .box,.toc{break-inside:avoid;}
+  .mm-shell.dim td.mm-cell{opacity:1 !important;}
+  .mm-picker{display:none !important;}
+  .mm-calc{background:#fff;color:#1a1a1a;border:1px solid var(--line);}
+  .mm-calc .q{color:#16607f;} .mm-calc .v{color:#1c6b3a;} .mm-calc .dim{color:#666;} .mm-calc .cap{color:#555;}
+}
+</style></head><body><div class="wrap">
+
+<header class="doc">
+<h1>Úvod do problematiky architektur neuronových sítí, založených na transformerech</h1>
+<div class="authors">Claude — Opus 4.8 &amp; Marek Malý</div>
+<div class="sub">Výkladový text pro úvod do výuky transformer-based modelů na vysoké škole. Postupujeme „odspoda nahoru“: od tokenu a embeddingu přes mechanismus pozornosti, dopřednou síť, reziduální spojení a normalizaci až k celému jazykovému modelu, jeho tréninku, generování a doladění. Vektorové obrázky (SVG) se renderují přímo v prohlížeči; pro PDF zvolte v prohlížeči Tisk → Uložit jako PDF.</div>
+</header>
+
+<div class="note">Didaktický princip celého textu: u každého kroku nejdřív vysvětlíme <b>jaký dílčí problém řešíme</b> (motivace) a teprve potom <b>jak ho matematicky řešíme</b>. Každý matematický symbol je vysvětlen při prvním použití; vedlejší symboly jsou doplněny menším písmem „pod čarou“. Jeden symbol vždy označuje jednu jedinou veličinu v celém textu (viz přehledová Tabulka&nbsp;1).</div>
+
+<nav class="toc">
+<h2>Obsah</h2>
+<ul class="toclist">
+<li><a href="#sec0"><span class="tn">0.</span>Proč transformery vznikly — motivace</a></li>
+<li><a href="#sec1"><span class="tn">1.</span>Tokenizace</a>
+  <ul>
+  <li><a href="#sec1-1"><span class="tn">1.1</span>Algoritmus BPE — jak vznikne slovník</a></li>
+  <li><a href="#sec1-2"><span class="tn">1.2</span>Záruka pokrytí: bytové atomy</a></li>
+  </ul></li>
+<li><a href="#sec2"><span class="tn">2.</span>Embeddingy: tabulka <em>E</em> a matice <em>X</em></a></li>
+<li><a href="#sec3"><span class="tn">3.</span>Self-attention — jádro celé architektury</a>
+  <ul>
+  <li><a href="#sec3-1"><span class="tn">3.1</span>Cíl: z bezkontextových embeddingů kontextové (X → Z)</a></li>
+  <li><a href="#sec3-2"><span class="tn">3.2</span>Relevance, ne podobnost — proč projekce W<sub>Q</sub>, W<sub>K</sub></a></li>
+  <li><a href="#sec3-3"><span class="tn">3.3</span>Mechanika: dotaz, klíč, hodnota, skóre, softmax, vážený součet</a></li>
+  <li><a href="#sec3-4"><span class="tn">3.4</span>Škálování √d<sub>k</sub></a></li>
+  <li><a href="#sec3-5"><span class="tn">3.5</span>Směrovost a vlastní skóre — bilineární forma M</a></li>
+  <li><a href="#sec3-6"><span class="tn">3.6</span>Proč ještě projekce W<sub>V</sub></a></li>
+  <li><a href="#sec3-7"><span class="tn">3.7</span>Pohled neuronové sítě: husté vrstvy + dynamické směrování</a></li>
+  <li><a href="#sec3-8"><span class="tn">3.8</span>Příklad krok za krokem: „Máma mele maso“</a></li>
+  </ul></li>
+<li><a href="#sec4"><span class="tn">4.</span>Vícehlavá pozornost (multi-head) a projekce W<sub>O</sub></a></li>
+<li><a href="#sec5"><span class="tn">5.</span>Poziční kódování</a></li>
+<li><a href="#sec6"><span class="tn">6.</span>Reziduální spojení a jeho hluboký smysl</a></li>
+<li><a href="#sec7"><span class="tn">7.</span>Dopředná síť (FFN)</a></li>
+<li><a href="#sec8"><span class="tn">8.</span>Normalizace: LayerNorm a RMSNorm</a></li>
+<li><a href="#sec9"><span class="tn">9.</span>Celý transformerový blok</a></li>
+<li><a href="#sec10"><span class="tn">10.</span>Od bloku k jazykovému modelu</a>
+  <ul>
+  <li><a href="#sec10-1"><span class="tn">10.1</span>Stack vrstev a kvalitativní skok Z<sub>1</sub> → Z<sub>N</sub></a></li>
+  <li><a href="#sec10-2"><span class="tn">10.2</span>Kauzální maska</a></li>
+  <li><a href="#sec10-3"><span class="tn">10.3</span>Výstup: unembedding, logity, softmax</a></li>
+  <li><a href="#sec10-4"><span class="tn">10.4</span>Výběr výstupního tokenu</a></li>
+  <li><a href="#sec10-5"><span class="tn">10.5</span>Autoregrese a KV-cache</a></li>
+  <li><a href="#sec10-6"><span class="tn">10.6</span>Trénink: predikce dalšího tokenu a self-supervision</a></li>
+  </ul></li>
+<li><a href="#sec11"><span class="tn">11.</span>Rodiny architektur a proč se modely liší</a></li>
+<li><a href="#sec12"><span class="tn">12.</span>Transformer jako obecný procesor sekvencí (obrázky, časové řady)</a></li>
+<li><a href="#sec13"><span class="tn">13.</span>Adaptace předtrénovaného modelu</a>
+  <ul>
+  <li><a href="#sec13-1"><span class="tn">13.1</span>Klasifikace, token [CLS] a mean-pooling</a></li>
+  <li><a href="#sec13-2"><span class="tn">13.2</span>Chirurgie: páteř a hlava (full-FT, linear-probe)</a></li>
+  <li><a href="#sec13-3"><span class="tn">13.3</span>LoRA — nízkohodnostní doladění</a></li>
+  <li><a href="#sec13-4"><span class="tn">13.4</span>„World model“ i u klasifikace</a></li>
+  </ul></li>
+<li><a href="#sec14"><span class="tn">14.</span>Závěr</a></li>
+<li><a href="#sec15"><span class="tn">15.</span>Reference</a></li>
+</ul>
+</nav>
+
+<h2 class="sec" id="sec0"><span class="num">0.</span>Proč transformery vznikly — motivace</h2>
+<div class="prose">
+<p>Než se pustíme do jediné rovnice, je potřeba říct, <strong>jaký problém</strong> vlastně transformer řeší. Bez toho jsou pozdější vzorce jen nepochopitelná změť lineární algebry. Předpokládáme, že čtenář rozumí klasickým neuronovým sítím včetně konvolučních (CNN); právě na nich se dá transformer hezky vysvětlit jako odpověď na to, co předchozí architektury neuměly dobře.</p>
+
+<p>Konvoluční síť má <strong>lokální receptivní pole</strong>: každý neuron vidí jen malé okolí vstupu a globální souvislost vzniká až postupně, hromaděním mnoha vrstev. Pro obrázky je to ideální, protože co spolu souvisí, bývá blízko sebe. U jazyka to ale drhne — slovo na začátku věty může určovat význam slova na konci, a budovat takhle dlouhé vazby přes desítky konvolučních vrstev je neefektivní.</p>
+
+<p>Před transformery se sekvence zpracovávaly <strong>rekurentními sítěmi</strong> (RNN, LSTM <a class="cit" href="#ref4">[ref_4]</a>), které čtou token po tokenu a nesou si „paměť“. Ty mají dva neduhy: jsou ze své podstaty <strong>sekvenční</strong> (špatně se paralelizují na GPU) a u dlouhých závislostí se informace cestou rozmělní.</p>
+
+<p>Transformer <a class="cit" href="#ref1">[ref_1]</a> oba problémy řeší jedinou myšlenkou: nech <strong>každý token se podívat přímo na každý jiný token v jediné vrstvě</strong>, a váhy, kterými se na ně dívá, ať se síť naučí dynamicky podle obsahu. Tomu se říká <strong>mechanismus pozornosti</strong> (<em>attention</em>). Receptivní pole je tím rovnou globální a celý výpočet se elegantně paralelizuje (Obr. 1).</p>
+</div>
+
+<figure class="diagram"><svg viewBox="0 0 720 248" role="img">
+<title>Tři způsoby zpracování sekvence: CNN, RNN, self-attention</title>
+<desc>Konvoluce vidí jen lokální okno, rekurentní síť čte sekvenčně a nese paměť, self-attention propojí každý token s každým v jediné vrstvě.</desc>
+<text class="th" x="120" y="26" text-anchor="middle">CNN — lokální okno</text>
+<text class="th" x="360" y="26" text-anchor="middle">RNN/LSTM — sekvenčně</text>
+<text class="th" x="600" y="26" text-anchor="middle">Self-attention — globálně</text>
+
+<!-- CNN -->
+<g><rect x="40" y="64" width="34" height="30" rx="5" class="c-gray" stroke-width="0.5"/><rect x="80" y="64" width="34" height="30" rx="5" class="c-amber" stroke-width="1"/><rect x="120" y="64" width="34" height="30" rx="5" class="c-amber" stroke-width="1"/><rect x="160" y="64" width="34" height="30" rx="5" class="c-amber" stroke-width="1"/><rect x="200" y="64" width="34" height="30" rx="5" class="c-gray" stroke-width="0.5"/></g>
+<path d="M137,94 L137,118" class="arr" stroke="var(--t)" stroke-width="1"/>
+<rect x="116" y="120" width="42" height="28" rx="5" class="c-coral" stroke-width="1"/>
+<text class="ts" x="137" y="178" text-anchor="middle">vidí jen 3 sousedy;</text>
+<text class="ts" x="137" y="194" text-anchor="middle">globál až po mnoha</text>
+<text class="ts" x="137" y="210" text-anchor="middle">vrstvách</text>
+
+<!-- RNN -->
+<g><rect x="300" y="64" width="30" height="30" rx="5" class="c-teal" stroke-width="1"/><rect x="345" y="64" width="30" height="30" rx="5" class="c-teal" stroke-width="1"/><rect x="390" y="64" width="30" height="30" rx="5" class="c-teal" stroke-width="1"/></g>
+<line x1="330" y1="79" x2="345" y2="79" class="arr" stroke="var(--t)" stroke-width="1.4"/>
+<line x1="375" y1="79" x2="390" y2="79" class="arr" stroke="var(--t)" stroke-width="1.4"/>
+<text class="ts" x="360" y="130" text-anchor="middle">paměť →</text>
+<text class="ts" x="360" y="178" text-anchor="middle">čte token po tokenu,</text>
+<text class="ts" x="360" y="194" text-anchor="middle">nejde paralelizovat,</text>
+<text class="ts" x="360" y="210" text-anchor="middle">dlouhý kontext slábne</text>
+
+<!-- attention -->
+<g><rect x="540" y="64" width="26" height="26" rx="5" class="c-amber" stroke-width="1"/><rect x="580" y="64" width="26" height="26" rx="5" class="c-amber" stroke-width="1"/><rect x="620" y="64" width="26" height="26" rx="5" class="c-amber" stroke-width="1"/><rect x="660" y="64" width="26" height="26" rx="5" class="c-amber" stroke-width="1"/></g>
+<line x1="553" y1="90" x2="593" y2="90" stroke="#EF9F27" stroke-width="1.2" opacity="0.7"/>
+<line x1="553" y1="90" x2="633" y2="90" stroke="#EF9F27" stroke-width="1.2" opacity="0.5"/>
+<line x1="553" y1="90" x2="673" y2="90" stroke="#EF9F27" stroke-width="1.2" opacity="0.4"/>
+<line x1="593" y1="90" x2="633" y2="90" stroke="#EF9F27" stroke-width="1.2" opacity="0.7"/>
+<line x1="593" y1="90" x2="673" y2="90" stroke="#EF9F27" stroke-width="1.2" opacity="0.5"/>
+<line x1="633" y1="90" x2="673" y2="90" stroke="#EF9F27" stroke-width="1.2" opacity="0.7"/>
+<path d="M540,108 q53,30 106,0" fill="none" stroke="#EF9F27" stroke-width="1.2" opacity="0.5"/>
+<text class="ts" x="600" y="178" text-anchor="middle">každý token vidí každý,</text>
+<text class="ts" x="600" y="194" text-anchor="middle">v jediné vrstvě,</text>
+<text class="ts" x="600" y="210" text-anchor="middle">plně paralelně</text>
+<text class="th" x="360" y="240" text-anchor="middle">Pozornost nahradila pevné lokální pole i sekvenční paměť jedinou dynamickou, obsahem řízenou operací</text>
+</svg>
+<figcaption><b>Obr. 1.</b> Tři přístupy ke zpracování sekvence. Transformer nahrazuje pevné lokální receptivní pole konvoluce a sekvenční paměť rekurence jediným mechanismem — dynamickou, obsahem řízenou pozorností.</figcaption>
+</figure>
+
+<div class="prose">
+<p>V celém textu se budeme řídit jednou notační kázní: <strong>jeden symbol = jedna veličina</strong>. Než začneme, shrňme klíčové symboly do jedné tabulky, ke které se lze kdykoli vrátit. Každý z nich navíc znovu zavedeme v textu při prvním použití.</p>
+</div>
+
+<div class="box">
+<span class="lab">Tabulka 1 — přehled hlavních symbolů</span>
+<table class="symtab">
+<tr><th>Symbol</th><th>Význam</th></tr>
+<tr><td>$n$</td><td>počet tokenů ve zpracovávané sekvenci (délka promptu)</td></tr>
+<tr><td>$d$</td><td>dimenze embeddingu (šířka modelu), např. 512</td></tr>
+<tr><td>$\mathcal{V}$, $|\mathcal{V}|$</td><td>slovník tokenů a jeho velikost (např. 50&nbsp;000)</td></tr>
+<tr><td>$E$</td><td>embeddingová tabulka, rozměr $|\mathcal{V}|\times d$</td></tr>
+<tr><td>$X$</td><td>vstupní matice $n\times d$ (embeddingy tokenů promptu po řádcích)</td></tr>
+<tr><td>$x_i$</td><td>$i$-tý řádek $X$ — embedding $i$-tého tokenu</td></tr>
+<tr><td>$W_Q,W_K,W_V$</td><td>naučené projekční matice pro dotaz, klíč, hodnotu</td></tr>
+<tr><td>$Q,K,V$</td><td>matice dotazů, klíčů, hodnot ($Q=XW_Q$ atd.)</td></tr>
+<tr><td>$d_k$</td><td>dimenze dotazu/klíče (na jednu hlavu)</td></tr>
+<tr><td>$S$, $A$</td><td>matice skóre $n\times n$ a matice vah pozornosti $A=\mathrm{softmax}(S)$</td></tr>
+<tr><td>$C$, $c_i$</td><td>syrový výstup vrstvy pozornosti (kontextová korekce) a její $i$-tý řádek; $C=AV=\mathrm{Attn}(X)$</td></tr>
+<tr><td>$Z$, $z_i$</td><td>definitivní kontextualizovaná matice (vstup plus korekce, $Z=X+C$) a její $i$-tý řádek</td></tr>
+<tr><td>$M$</td><td>bilineární matice skóre $M=W_QW_K^{\top}$, rozměr $d\times d$</td></tr>
+<tr><td>$h$</td><td>počet hlav (heads)</td></tr>
+<tr><td>$W_O$</td><td>výstupní projekce vícehlavé pozornosti, $d\times d$</td></tr>
+<tr><td>$p_i$</td><td>poziční vektor přičtený k tokenu na pozici $i$</td></tr>
+<tr><td>$\ell$, $N$</td><td>index vrstvy a celkový počet bloků; $Z_\ell$ = výstup $\ell$-té vrstvy</td></tr>
+<tr><td>$W_1,W_2$; $d_{\text{ff}}$</td><td>váhy dopředné sítě (FFN) a její skrytá šířka (≈ $4d$)</td></tr>
+<tr><td>$\gamma,\beta$</td><td>naučené per-kanálové měřítko a posun v normalizaci</td></tr>
+<tr><td>$W_U$</td><td>unembeddingová matice $d\times|\mathcal{V}|$ (často $=E^{\top}$)</td></tr>
+<tr><td>$r$; $W_{\text{down}},W_{\text{up}}$</td><td>rank a dvojice nízkohodnostních matic v LoRA</td></tr>
+</table>
+</div>
+
+<h2 class="sec" id="sec1"><span class="num">1.</span>Tokenizace</h2>
+<div class="prose">
+<p><strong>Problém.</strong> Na vstupu máme prostý text — řetězec znaků. Neuronová síť ale počítá s čísly, ne s písmeny. První úkol tedy zní: jak text rozsekat na elementární jednotky, kterým síť přiřadí čísla? Nabízejí se dva extrémy a oba mají vadu.</p>
+<p>Kdybychom za jednotku vzali <strong>celé slovo</strong>, dostaneme krátké sekvence a hodně významu na jednotku — ale slovník všech slov je prakticky nekonečný. Nová slova, překlepy, cizí jazyky, čísla… vždy narazíme na slovo, které ve slovníku není, a model si s ním neporadí. Kdybychom šli na druhý extrém a brali <strong>jednotlivá písmena</strong>, slovník je maličký a konečný, jenže sekvence jsou nesmírně dlouhé a jedno písmeno nenese skoro žádný význam — model se z toho učí hůř a kvadratická cena pozornosti (viz dále) bobtná.</p>
+<p><strong>Řešení — subslovní tokeny.</strong> Ustálila se zlatá střední cesta: <strong>tokeny nejsou slova, nýbrž subslovní kousky</strong>. Časté řetězce (běžná slova, koncovky jako „-ing“, „ the“) se slepí do jednoho tokenu; vzácná slova se rozpadnou na menší kusy; a <strong>úplně cokoli jde složit</strong> — v nejhorším případě až po jednotlivé byty. Slovník $\mathcal{V}$ je tak konečný (typicky $|\mathcal{V}|\approx 50\,000$ tokenů), ale pokryje libovolný text.</p>
+<span class="smallnote"><b>$\mathcal{V}$</b> = slovník (množina všech tokenů, kterým model rozumí); <b>$|\mathcal{V}|$</b> = jeho velikost, počet tokenů.</span>
+
+<h3 class="sub" id="sec1-1"><span class="num">1.1</span>Algoritmus BPE — jak vznikne slovník</h3>
+<p>Nejčastěji se slovník staví algoritmem <strong>Byte-Pair Encoding (BPE)</strong> <a class="cit" href="#ref6">[ref_6]</a>. Je to <strong>jednorázová příprava před tréninkem samotného modelu</strong>, provedená na velkém korpusu, a cíl je: zjistit z dat, které sekvence znaků se vyplatí mít jako samostatné tokeny. Algoritmus je překvapivě prostá smyčka „spočítej — slouč — opakuj“:</p>
+<ol>
+<li><strong>Start.</strong> Rozsekej celý korpus na atomy (byty/znaky). Slovník zatím obsahuje jen tyto atomy.</li>
+<li><strong>Spočítej.</strong> Projdi korpus a spočítej, jak často se vyskytuje každá <em>sousední dvojice</em> symbolů.</li>
+<li><strong>Slouč.</strong> Vezmi <em>nejčastější</em> dvojici, slep ji do jednoho nového tokenu, přepiš všechny její výskyty a přidej ji do slovníku (uloží se jako „slučovací pravidlo“).</li>
+<li><strong>Opakuj</strong> krok 2–3 (do nových dvojic se teď počítají i nově vzniklé tokeny), dokud slovník nedosáhne cílové velikosti.</li>
+</ol>
+<p>Na maličkém korpusu se slovy o četnostech „low“ ×5, „newer“ ×6, „wider“ ×3, „lowest“ ×2 je první sloučení dvojice „e“+„r“ (vyskytuje se 9×, nejvíc), takže vznikne token „er“ a z „newer“ se stane „n e w er“. Další kolo slije „lo“ (7×), pak „ow“ atd. Po tisících opakováních se z častých kousků slepí delší tokeny — běžná slova jako „ the“ či „ transform“ nakonec bývají jeden token, kdežto vzácná slova zůstanou jako pár fragmentů (Obr. 2).</p>
+</div>
+
+<figure class="diagram"><svg viewBox="0 0 700 232" role="img">
+<title>Stavba BPE slovníku: smyčka spočítej dvojice, slouč nejčastější, opakuj</title>
+<desc>Korpus rozsekaný na atomy. Spočítají se sousední dvojice, nejčastější er se sloučí do nového tokenu er a proces se opakuje, až jsou časté sekvence i celá slova samostatné tokeny.</desc>
+<defs>
+<marker id="ar_bpe" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></marker>
+</defs>
+<text class="th" x="350" y="22" text-anchor="middle">Smyčka: spočítej dvojice → slouč nejčastější → opakuj</text>
+<g class="c-gray"><rect x="20" y="48" width="180" height="78" rx="6" stroke-width="0.5"/></g>
+<text class="ts" x="110" y="64" text-anchor="middle">korpus → atomy</text>
+<text class="ts" x="110" y="84" text-anchor="middle">l o w  (5×)</text>
+<text class="ts" x="110" y="102" text-anchor="middle">n e w e r  (6×)</text>
+<text class="ts" x="110" y="120" text-anchor="middle">w i d e r  (3×)</text>
+<line x1="200" y1="87" x2="262" y2="87" class="arr" stroke="var(--t)" marker-end="url(#ar_bpe)"/><text class="th" x="231" y="78" text-anchor="middle">1.</text>
+<g class="c-gray"><rect x="265" y="48" width="170" height="78" rx="6" stroke-width="0.5"/></g>
+<text class="ts" x="350" y="64" text-anchor="middle">spočítej dvojice</text>
+<text class="th" x="350" y="86" text-anchor="middle" dominant-baseline="central">e r  →  9×</text>
+<text class="ts" x="350" y="104" text-anchor="middle">l o  →  7×</text>
+<text class="ts" x="350" y="120" text-anchor="middle">w e  →  8×</text>
+<line x1="435" y1="87" x2="497" y2="87" class="arr" stroke="var(--t)" marker-end="url(#ar_bpe)"/><text class="th" x="466" y="78" text-anchor="middle">2.</text>
+<g class="c-amber"><rect x="500" y="48" width="180" height="78" rx="6" stroke-width="1"/></g>
+<text class="ts" x="590" y="64" text-anchor="middle">slouč nejčastější</text>
+<text class="th" x="590" y="86" text-anchor="middle" dominant-baseline="central">„e“+„r“ → „er“</text>
+<text class="ts" x="590" y="104" text-anchor="middle">n e w [er]</text>
+<text class="ts" x="590" y="120" text-anchor="middle">w i d [er]</text>
+<path d="M590,126 L590,150 L110,150 L110,126" fill="none" stroke="var(--t)" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#ar_bpe)"/>
+<text class="th" x="350" y="144" text-anchor="middle">3. opakuj (×tisíce) — slovník roste o 1 token za krok</text>
+<text class="th" x="350" y="188" text-anchor="middle">Po ~50 000 sloučeních: časté sekvence i celá slova = jednotlivé tokeny</text>
+<text class="ts" x="350" y="210" text-anchor="middle">Rozhodla čistě četnost v datech — žádné lingvistické pravidlo</text>
+</svg>
+<figcaption><b>Obr. 2.</b> Stavba BPE slovníku. Výstupem je uspořádaný seznam slučovacích pravidel; při tokenizaci nového textu se aplikují <b>ve stejném pořadí</b>, takže stejný text se vždy zakóduje stejně.</figcaption>
+</figure>
+
+<div class="prose">
+<p><strong>Ukončovací kritérium.</strong> V drtivé většině případů je cílová velikost slovníku prostě <strong>hyperparametr</strong> zvolený předem; BPE slučuje, dokud ho nedosáhne. Počet sloučení je tedy</p>
+<p>$$\text{počet sloučení} \;=\; |\mathcal{V}| \;-\; \underbrace{256}_{\text{bytové atomy}} \;-\; (\text{pár speciálních tokenů}).$$</p>
+<p>Důvod pro pevné číslo je praktický: model potřebuje <strong>pevně velkou</strong> embeddingovou tabulku a výstupní vrstvu, takže velikost slovníku musíme znát dopředu. To číslo navíc není libovolné, je to <strong>kompromis</strong>: malý slovník dává dlouhé sekvence (slovo se rozpadne na víc kousků), ale malou a dobře trénovanou tabulku; velký slovník dává krátké sekvence (slovo = jeden token), ale obří tabulku, v níž jsou vzácné tokeny podtrénované.</p>
+
+<h3 class="sub" id="sec1-2"><span class="num">1.2</span>Záruka pokrytí: bytové atomy</h3>
+<p>Zbývá zodpovědět zásadní otázku: <strong>čím je zaručeno, že slovník pokryje úplně každý vstup</strong>, když slov je teoreticky nekonečno (překlepy, nová slova, cizí symboly)? Klíč je v tom, že BPE ten „znakový extrém“ nikdy nezahodí — jen ho schová jako záchrannou síť. Algoritmus <strong>začne od atomární abecedy</strong> a tyto atomární tokeny ze slovníku <strong>nikdy nezmizí</strong>; slučování jen <em>přidává</em> nové tokeny nad ně. Finální slovník je tedy vždy</p>
+<p>$$\mathcal{V} \;=\; \{\text{všechny atomy}\}\;\cup\;\{\text{naučená sloučení}\}.$$</p>
+<p>Protože jsou atomy stále k dispozici, <strong>každý myslitelný řetězec jde složit</strong> — v nejhorším případě se rozpadne až na jednotlivé atomy. Záruka tedy nezní „máme v seznamu všechna slova“ (to nejde), ale „máme abecedu, ze které se každé slovo dá poskládat“ — úplně stejně jako 26 písmen složí nekonečně mnoho slov.</p>
+<p>Moderní tokenizery (od GPT-2 dál) pracují rovnou s <strong>byty</strong>, kterých je přesně <strong>256</strong>, a jakýkoli text v jakémkoli jazyce (včetně emoji) se přes UTF-8 zakóduje na posloupnost bytů. Když máme ve slovníku všech 256 bytů, umíme reprezentovat <strong>doslova libovolný vstup</strong>. Konečný základ (256), nekonečné pokrytí (Obr. 3).</p>
+</div>
+
+<figure class="diagram"><svg viewBox="0 0 700 296" role="img">
+<title>Záruka pokrytí: 256 bytových atomů je ve slovníku vždy, sloučení jsou jen zkratky</title>
+<desc>Slovník se skládá z 256 bytových atomů a tisíců sloučení. Běžné slovo se tokenizuje na zkratky, divný řetězec spadne na atomy. Nic se nikdy neodmítne.</desc>
+<defs>
+<marker id="ar_cov" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></marker>
+</defs>
+<text class="th" x="350" y="24" text-anchor="middle">Slovník (~50 000 tokenů) =</text>
+<g class="c-teal"><rect x="120" y="40" width="172" height="46" rx="6" stroke-width="1"/></g>
+<text class="th" x="206" y="58" text-anchor="middle" dominant-baseline="central">256 bytů — atomy</text>
+<text class="ts" x="206" y="75" text-anchor="middle" dominant-baseline="central">vždy přítomné</text>
+<text class="th" x="306" y="63" text-anchor="middle" dominant-baseline="central">+</text>
+<g class="c-amber"><rect x="322" y="40" width="250" height="46" rx="6" stroke-width="1"/></g>
+<text class="th" x="447" y="58" text-anchor="middle" dominant-baseline="central">tisíce sloučení</text>
+<text class="ts" x="447" y="75" text-anchor="middle" dominant-baseline="central">časté sekvence = zkratky</text>
+<text class="ts" x="206" y="104" text-anchor="middle">↑ záchranná síť: poskládají úplně cokoli</text>
+<line x1="40" y1="126" x2="660" y2="126" stroke="var(--t)" stroke-width="0.5" opacity="0.4"/>
+<text class="ts" x="48" y="152" text-anchor="start">běžné slovo:</text>
+<g class="c-gray"><rect x="48" y="162" width="120" height="32" rx="6" stroke-width="0.5"/></g>
+<text class="th" x="108" y="178" text-anchor="middle" dominant-baseline="central">„transformer“</text>
+<line x1="168" y1="178" x2="200" y2="178" class="arr" stroke="var(--t)" marker-end="url(#ar_cov)"/>
+<g class="c-amber"><rect x="204" y="162" width="118" height="32" rx="5" stroke-width="1"/></g>
+<text class="th" x="263" y="178" text-anchor="middle" dominant-baseline="central"> transform</text>
+<g class="c-amber"><rect x="326" y="162" width="48" height="32" rx="5" stroke-width="1"/></g>
+<text class="th" x="350" y="178" text-anchor="middle" dominant-baseline="central">er</text>
+<text class="ts" x="392" y="178" text-anchor="start" dominant-baseline="central">2 tokeny (zkratky)</text>
+<text class="ts" x="48" y="226" text-anchor="start">cokoli / překlep:</text>
+<g class="c-gray"><rect x="48" y="236" width="120" height="32" rx="6" stroke-width="0.5"/></g>
+<text class="th" x="108" y="252" text-anchor="middle" dominant-baseline="central">„qz#ä“</text>
+<line x1="168" y1="252" x2="200" y2="252" class="arr" stroke="var(--t)" marker-end="url(#ar_cov)"/>
+<g class="c-teal"><rect x="204" y="236" width="34" height="32" rx="5" stroke-width="1"/></g><text class="th" x="221" y="252" text-anchor="middle" dominant-baseline="central">q</text>
+<g class="c-teal"><rect x="242" y="236" width="34" height="32" rx="5" stroke-width="1"/></g><text class="th" x="259" y="252" text-anchor="middle" dominant-baseline="central">z</text>
+<g class="c-teal"><rect x="280" y="236" width="34" height="32" rx="5" stroke-width="1"/></g><text class="th" x="297" y="252" text-anchor="middle" dominant-baseline="central">#</text>
+<g class="c-teal"><rect x="318" y="236" width="48" height="32" rx="5" stroke-width="1"/></g><text class="th" x="342" y="252" text-anchor="middle" dominant-baseline="central">ä→byty</text>
+<text class="ts" x="392" y="252" text-anchor="start" dominant-baseline="central">→ atomy (vždy fungují)</text>
+<text class="th" x="350" y="290" text-anchor="middle">Cokoli se v nejhorším rozloží na byty; nic se nikdy neodmítne</text>
+</svg>
+<figcaption><b>Obr. 3.</b> Záruka pokrytí tokenizace. Vzácné slovo nebo překlep se nezahodí — jen se rozseká na víc menších kousků, sekvence je delší, ale vždy platná.</figcaption>
+</figure>
+
+<h2 class="sec" id="sec2"><span class="num">2.</span>Embeddingy: tabulka <span style="font-style:italic">E</span> a matice <span style="font-style:italic">X</span></h2>
+<div class="prose">
+<p><strong>Problém.</strong> Máme tokeny a jejich celá čísla (ID = index ve slovníku). Číslo ID samo o sobě ale nenese žádný význam — že má „kočka“ ID 9123 nic neříká o tom, co to slovo znamená. Potřebujeme každý token zastoupit <strong>vektorem</strong> v prostoru, kde geometrická blízkost odpovídá významové příbuznosti.</p>
+<p><strong>Řešení — naučená vyhledávací tabulka.</strong> Embedding je naučená tabulka $E$ o rozměru $|\mathcal{V}|\times d$: jeden řádek na každý token slovníku, každý řádek je $d$-rozměrný vektor.</p>
+<span class="smallnote"><b>$E$</b> = embeddingová tabulka (zásobárna vektorů všech tokenů); <b>$d$</b> = dimenze embeddingu, tj. délka jednoho vektoru (typicky 512 až tisíce).</span>
+<p>„Vyrobit embedding“ tedy <strong>při použití modelu</strong> neznamená nic počítat: vezmeme <strong>ID tokenu a vytáhneme příslušný řádek</strong> tabulky. ID 9123 → řádek 9123 → to <em>je</em> ten $d$-rozměrný vektor. Čistá indexace, žádná funkce na vstupu. Samotné <em>hodnoty</em> v tabulce se pochopitelně spočítat musí — ale ne nyní a ne pro každý token zvlášť, nýbrž jednou provždy <strong>během tréninku</strong>: vektory v $E$ jsou <strong>naučené parametry</strong>, na začátku náhodné a učební algoritmus zpětného šíření chyby (backpropagation) je postupně dolaďuje spolu se zbytkem modelu, takže tokeny užívané v podobných kontextech skončí s podobnými vektory (odtud známé geometrie jako „král − muž + žena ≈ královna“) (Obr. 4).</p>
+</div>
+
+<figure class="diagram"><svg viewBox="0 0 700 372" role="img">
+<title>Od promptu k embeddingům: tokenizace na subslova s ID, pak vyhledání řádku v tabulce E</title>
+<desc>Prompt se tokenizuje na subslova s celočíselnými ID. ID tokenu indexuje řádek v naučené tabulce E o rozměru slovník krát d, ten řádek je embedding. Řádky se skládají do matice X.</desc>
+<defs>
+<marker id="ar_emb" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></marker>
+</defs>
+<g class="c-gray"><rect x="220" y="22" width="260" height="36" rx="6" stroke-width="0.5"/></g>
+<text class="th" x="350" y="40" text-anchor="middle" dominant-baseline="central">„Mám rád transformery“</text>
+<line x1="350" y1="58" x2="350" y2="80" class="arr" stroke="var(--t)" marker-end="url(#ar_emb)"/>
+<text class="ts" x="362" y="70" text-anchor="start">tokenizace (BPE)</text>
+<g class="c-gray"><rect x="100" y="84" width="116" height="42" rx="6" stroke-width="0.5"/></g>
+<text class="th" x="158" y="100" text-anchor="middle" dominant-baseline="central">Mám</text><text class="ts" x="158" y="116" text-anchor="middle" dominant-baseline="central">id 1842</text>
+<g class="c-gray"><rect x="224" y="84" width="116" height="42" rx="6" stroke-width="0.5"/></g>
+<text class="th" x="282" y="100" text-anchor="middle" dominant-baseline="central"> rád</text><text class="ts" x="282" y="116" text-anchor="middle" dominant-baseline="central">id 763</text>
+<g class="c-amber"><rect x="348" y="84" width="116" height="42" rx="6" stroke-width="1"/></g>
+<text class="th" x="406" y="100" text-anchor="middle" dominant-baseline="central"> transform</text><text class="ts" x="406" y="116" text-anchor="middle" dominant-baseline="central">id 9123</text>
+<g class="c-gray"><rect x="472" y="84" width="116" height="42" rx="6" stroke-width="0.5"/></g>
+<text class="th" x="530" y="100" text-anchor="middle" dominant-baseline="central">ery</text><text class="ts" x="530" y="116" text-anchor="middle" dominant-baseline="central">id 412</text>
+<text class="ts" x="350" y="150" text-anchor="middle">embedding = vyhledání řádku v naučené tabulce E</text>
+<g class="c-amber"><rect x="60" y="206" width="92" height="40" rx="6" stroke-width="1"/></g>
+<text class="th" x="106" y="226" text-anchor="middle" dominant-baseline="central">id 9123</text>
+<line x1="152" y1="226" x2="186" y2="226" class="arr" stroke="var(--t)" marker-end="url(#ar_emb)"/>
+<rect x="190" y="172" width="120" height="120" rx="4" class="c-gray"/>
+<line x1="190" y1="192" x2="310" y2="192" stroke="var(--bg)" stroke-width="1.5" opacity="0.5"/>
+<line x1="190" y1="212" x2="310" y2="212" stroke="var(--bg)" stroke-width="1.5" opacity="0.5"/>
+<rect x="190" y="216" width="120" height="20" class="c-amber"/>
+<line x1="190" y1="256" x2="310" y2="256" stroke="var(--bg)" stroke-width="1.5" opacity="0.5"/>
+<line x1="190" y1="276" x2="310" y2="276" stroke="var(--bg)" stroke-width="1.5" opacity="0.5"/>
+<text class="ts" x="250" y="306" text-anchor="middle">tabulka E (|𝒱| ×d)</text>
+<text class="ts" x="316" y="226" text-anchor="start" dominant-baseline="central">řádek 9123</text>
+<line x1="310" y1="240" x2="352" y2="240" class="arr" stroke="var(--t)" marker-end="url(#ar_emb)"/>
+<g class="c-amber"><rect x="356" y="226" width="286" height="28" rx="5" stroke-width="1"/></g>
+<text class="ts" x="499" y="240" text-anchor="middle" dominant-baseline="central">[0.21, −0.70, 0.05, … ] — d čísel</text>
+<text class="ts" x="499" y="210" text-anchor="middle">= embedding vektor tokenu</text>
+<text class="th" x="350" y="338" text-anchor="middle">Každý token → jeho řádek z E; řádky naskládané pod sebe = matice X (n ×d)</text>
+<text class="ts" x="350" y="360" text-anchor="middle">To je přesně ta bezkontextová X, od které budeme dál vycházet</text>
+</svg>
+<figcaption><b>Obr. 4.</b> Od textu k matici <span style="font-style:italic">X</span>. Pro každý token promptu vytáhneme jeho řádek z tabulky <span style="font-style:italic">E</span> a řádky naskládáme pod sebe.</figcaption>
+</figure>
+
+<div class="prose">
+<p>Rozlišujme dva různé objekty, ať se neslijí:</p>
+<ul>
+<li><strong>Tabulka $E$</strong> — celý slovník, rozměr $|\mathcal{V}|\times d$ (např. $50\,000\times512$). Pevná, naučená <em>zásobárna</em> všech možných tokenů; sedí v modelu pořád stejná. Z ní se jen <em>čte</em>.</li>
+<li><strong>Matice $X$</strong> — konkrétní prompt, rozměr $n\times d$ (např. $4\times512$). Vznikne tak, že pro každý token promptu vytáhneme jeho jeden řádek z $E$ a řádky naskládáme pod sebe. Mění se s každým promptem.</li>
+</ul>
+<span class="smallnote"><b>$X$</b> = vstupní matice promptu ($n$ řádků = $n$ tokenů, každý řádek je $d$-rozměrný embedding); <b>$x_i$</b> = $i$-tý řádek $X$, embedding $i$-tého tokenu; <b>$n$</b> = počet tokenů promptu.</span>
+<p>$X$ je tedy <strong>výběr několika řádků</strong> z velké tabulky $E$ — přesně těch, co odpovídají tokenům promptu, ve správném pořadí (a token, který se v promptu vyskytne dvakrát, se v $X$ objeví dvakrát). Tato matice $X$ je naším výchozím bodem: každý její řádek nese zatím jen <strong>bezkontextový</strong>, „slovníkový“ význam tokenu, bez jediné informace o tom, co je kolem něj. Vdechnout těmto vektorům kontext je úkolem mechanismu pozornosti, ke kterému se teď dostáváme.</p>
+</div>
+
+<h2 class="sec" id="sec3"><span class="num">3.</span>Self-attention — jádro celé architektury</h2>
+
+<h3 class="sub" id="sec3-1"><span class="num">3.1</span>Cíl: z bezkontextových embeddingů kontextové (X → Z)</h3>
+<div class="prose">
+<p>Než budeme cokoli počítat, musíme si naprosto polopaticky vyjasnit <strong>čeho vlastně chceme dosáhnout</strong>. Teprve pak bude jasné, proč mechanismus vypadá tak, jak vypadá. (Toto je nejdůležitější odstavec celé této sekce — pokud něco, pak právě tohle.)</p>
+<p>Embeddingy v $X$ jsou <strong>bezkontextové</strong>. Slovo „raketa“ má v $X$ jeden jediný vektor, ať myslíme tenisovou pálku, nebo nosič k Měsíci — je to slovníkový průměr přes všechny významy slova. A to je k ničemu, protože smysl slovu dává až věta. Self-attention vezme matici $X$ a vyrobí novou matici $Z$ <strong>stejných rozměrů</strong> ($n\times d$), ve které má každé slovo vektor odpovídající tomu, co znamená <strong>právě v této větě</strong>.</p>
+<span class="smallnote"><b>$Z$</b> = definitivní <em>kontextualizovaná</em> matice (to, co chceme), rozměr $n\times d$; <b>$z_i$</b> = její $i$-tý řádek, kontextový vektor $i$-tého tokenu. Pozor: samotná vrstva pozornosti spočítá jen <em>kontextovou korekci</em> $C$ (zavedeme ji v 3.3) a $Z$ vznikne až jejím přičtením k původnímu vstupu, $Z = X + C$ (toto přičtení je reziduální spojení, sekce 6).</span>
+<p>Stručně: <strong>$X$ = slova vytržená z kontextu, $Z$ = táž slova zasazená do kontextu.</strong> Pozor — attention nedělá „shrnutí věty“ do jednoho vektoru; dělá <strong>přepsání každého jednotlivého slova podle jeho okolí</strong>. Řádek $X$ je token mimo kontext, řádek $Z$ je týž token přepsaný tak, aby nesl svou roli v této konkrétní větě (Obr. 5).</p>
+</div>
+
+<figure class="diagram"><svg viewBox="0 0 700 332" role="img">
+<title>Kontextualizace: stejný řádek raketa v X dá různý řádek v Z podle věty</title>
+<desc>Slovo raketa má v matici X jeden bezkontextový vektor. Po průchodu self-attention se v matici Z přepíše buď na tenisový, nebo na kosmický význam, podle okolních slov ve větě.</desc>
+<defs>
+<marker id="ar_ctx" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></marker>
+</defs>
+<g class="c-gray"><rect x="260" y="32" width="180" height="50" rx="6" stroke-width="0.5"/></g>
+<text class="th" x="350" y="50" text-anchor="middle" dominant-baseline="central">raketa — řádek v X</text>
+<text class="ts" x="350" y="68" text-anchor="middle" dominant-baseline="central">oba významy slité dohromady</text>
+<line x1="310" y1="82" x2="190" y2="122" class="arr" stroke="var(--t)" marker-end="url(#ar_ctx)"/>
+<line x1="390" y1="82" x2="510" y2="122" class="arr" stroke="var(--t)" marker-end="url(#ar_ctx)"/>
+<g class="c-teal"><rect x="55" y="126" width="255" height="50" rx="6" stroke-width="0.5"/></g>
+<text class="th" x="182" y="144" text-anchor="middle" dominant-baseline="central">kontext: tenis</text>
+<text class="ts" x="182" y="162" text-anchor="middle" dominant-baseline="central">„Tenista zlomil raketu“</text>
+<g class="c-teal"><rect x="390" y="126" width="260" height="50" rx="6" stroke-width="0.5"/></g>
+<text class="th" x="520" y="144" text-anchor="middle" dominant-baseline="central">kontext: vesmír</text>
+<text class="ts" x="520" y="162" text-anchor="middle" dominant-baseline="central">„Raketa odstartovala k Měsíci“</text>
+<line x1="182" y1="176" x2="182" y2="218" class="arr" stroke="var(--t)" marker-end="url(#ar_ctx)"/>
+<line x1="520" y1="176" x2="520" y2="218" class="arr" stroke="var(--t)" marker-end="url(#ar_ctx)"/>
+<g class="c-coral"><rect x="55" y="220" width="255" height="54" rx="6" stroke-width="1"/></g>
+<text class="th" x="182" y="240" text-anchor="middle" dominant-baseline="central">raketa — řádek v Z</text>
+<text class="ts" x="182" y="259" text-anchor="middle" dominant-baseline="central">= tenisová pálka</text>
+<g class="c-coral"><rect x="390" y="220" width="260" height="54" rx="6" stroke-width="1"/></g>
+<text class="th" x="520" y="240" text-anchor="middle" dominant-baseline="central">raketa — řádek v Z</text>
+<text class="ts" x="520" y="259" text-anchor="middle" dominant-baseline="central">= kosmický nosič</text>
+<text class="th" x="350" y="300" text-anchor="middle">Stejný řádek v X, různý řádek v Z — podle věty</text>
+<text class="ts" x="350" y="320" text-anchor="middle">Z = X, kde každé slovo už znamená to, co znamená právě tady</text>
+</svg>
+<figcaption><b>Obr. 5.</b> Cíl self-attention: <b>vyjasnění významu</b>. Aby se „raketa“ přepsala správně, musí si půjčit informaci od slov, která jí dávají smysl (od „tenista“, nebo od „Měsíc“). Přesně to je úkol, který má pozornost vyřešit.</figcaption>
+</figure>
+
+<h3 class="sub" id="sec3-2"><span class="num">3.2</span>Relevance, ne podobnost — proč projekce W<sub>Q</sub>, W<sub>K</sub></h3>
+<div class="prose">
+<p>Z cíle plyne první otázka: aby se token přepsal, potřebuje vědět, <strong>od kterých slov ve větě si má půjčit</strong>. První, naivní nápad zní: porovnejme tokeny <strong>skalárním součinem jejich embeddingů</strong> $x_i\cdot x_j$ — čím podobnější, tím větší váha. To je intuice „porovnávání podle podobnosti“ a je to dobrý odrazový můstek. <strong>Jenže měří špatnou věc.</strong></p>
+<p>Skalární součin holých embeddingů měří <em>sémantickou podobnost slov</em> („jsou si ta dvě slova významově blízká?“). Kontextualizace ale potřebuje úplně jiný vztah — <em>relevanci</em>: „je token $j$ užitečný pro upřesnění tokenu $i$?“. A relevance není totéž co podobnost.</p>
+<p>Vezměme větu <strong>„Pes kouše muže“</strong>. Aby se sloveso „kouše“ zasadilo do kontextu, musí si přitáhnout svůj <em>podmět</em> („pes“) a <em>předmět</em> („muže“) — to jsou slova určující, kdo koho kouše. Jenže sloveso a podstatné jméno si <strong>nejsou podobná</strong>, jejich holé embeddingy mají malý skalární součin. Naopak „pes“ by si přes podobnost přitáhl spíš „kočku“ nebo „vlka“ (podobná zvířata), což je k pochopení věty na nic. A „kouše“ by přes podobnost nejvíc sedělo samo sobě. Holá podobnost prostě míří vedle (Obr. 6).</p>
+</div>
+
+<figure class="diagram"><svg viewBox="0 0 700 244" role="img">
+<title>Proč jsou potřeba projekce: holý součin měří podobnost, projekce učí relevanci</title>
+<desc>Pro sloveso kouše ve větě Pes kouše muže. Bez projekce se kouše váže nejvíc samo na sebe, protože součin měří podobnost. Po projekci se kouše váže na svůj podmět pes a předmět muže.</desc>
+<line x1="350" y1="28" x2="350" y2="206" stroke="var(--t)" stroke-width="0.5" stroke-dasharray="4 4" opacity="0.5"/>
+<text class="th" x="172" y="32" text-anchor="middle">Holé embeddingy ·X·Xᵀ</text>
+<path d="M162,140 Q172,104 182,140" fill="none" stroke="#BA7517" stroke-width="6" stroke-linecap="round"/>
+<path d="M166,138 Q128,72 88,138" fill="none" stroke="#BA7517" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+<path d="M180,138 Q220,72 260,138" fill="none" stroke="#BA7517" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+<g class="c-gray"><rect x="52" y="140" width="70" height="36" rx="6" stroke-width="0.5"/></g><text class="t" x="87" y="158" text-anchor="middle" dominant-baseline="central">Pes</text>
+<g class="c-amber"><rect x="132" y="140" width="80" height="36" rx="6" stroke-width="1"/></g><text class="th" x="172" y="158" text-anchor="middle" dominant-baseline="central">kouše</text>
+<g class="c-gray"><rect x="225" y="140" width="70" height="36" rx="6" stroke-width="0.5"/></g><text class="t" x="260" y="158" text-anchor="middle" dominant-baseline="central">muže</text>
+<text class="ts" x="172" y="196" text-anchor="middle">podobnost → „kouše“ sedí nejvíc samo sobě</text>
+<text class="th" x="525" y="32" text-anchor="middle">Po projekci ·Q·Kᵀ</text>
+<path d="M518,138 Q480,68 440,138" fill="none" stroke="#BA7517" stroke-width="5.5" stroke-linecap="round"/>
+<path d="M532,138 Q570,68 610,138" fill="none" stroke="#BA7517" stroke-width="5.5" stroke-linecap="round"/>
+<path d="M515,140 Q525,112 535,140" fill="none" stroke="#BA7517" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+<g class="c-gray"><rect x="405" y="140" width="70" height="36" rx="6" stroke-width="0.5"/></g><text class="t" x="440" y="158" text-anchor="middle" dominant-baseline="central">Pes</text>
+<g class="c-amber"><rect x="485" y="140" width="80" height="36" rx="6" stroke-width="1"/></g><text class="th" x="525" y="158" text-anchor="middle" dominant-baseline="central">kouše</text>
+<g class="c-gray"><rect x="578" y="140" width="70" height="36" rx="6" stroke-width="0.5"/></g><text class="t" x="613" y="158" text-anchor="middle" dominant-baseline="central">muže</text>
+<text class="ts" x="525" y="196" text-anchor="middle">relevance → přitáhne podmět i předmět</text>
+<text class="ts" x="350" y="226" text-anchor="middle">Tlustá čára = velká váha. Vlevo měří podobnost, vpravo naučený vztah „co ke komu patří“</text>
+</svg>
+<figcaption><b>Obr. 6.</b> Holá podobnost ($XX^{\top}$) vs. naučená relevance ($QK^{\top}$). Projekce posunou porovnání z „kdo je čemu podobný“ na „co ke komu patří“.</figcaption>
+</figure>
+
+<div class="prose">
+<p><strong>Řešení.</strong> Embedding tokenu se nejprve promítne dvěma <strong>naučenými maticemi</strong> $W_Q$ a $W_K$ na dva různé vektory. Podobnost se pak neměří v původním významovém prostoru, ale v prostoru, který si síť vytrénovala tak, aby skalární součin znamenal <em>„tohle je pro mě relevantní“</em>:</p>
+<ul>
+<li><strong>dotaz</strong> (query) $q_i = x_i W_Q$,</li>
+<li><strong>klíč</strong> (key) $k_i = x_i W_K$.</li>
+</ul>
+<span class="smallnote"><b>$W_Q,W_K$</b> = naučené projekční matice rozměru $d\times d_k$ (z embeddingu dělají dotaz, resp. klíč); <b>$q_i,k_i$</b> = dotaz a klíč $i$-tého tokenu; <b>$d_k$</b> = dimenze dotazu/klíče.</span>
+<p>Druhý, ještě tvrdší důvod pro projekce: holý součin $XX^{\top}$ nemá <strong>žádný učitelný parametr</strong>. Síť by se nemohla naučit <em>jak</em> vážit pozornost — vzor by byl napevno dán embeddingy a v každé vrstvě i hlavě stejný. Matice $W_Q,W_K$ jsou jediné místo, kde se skórování vůbec učí. A protože $W_Q\ne W_K$, je výsledný vztah navíc <strong>směrový</strong>: zájmeno se může dívat na své podstatné jméno víc, než ono na něj — což symetrický $XX^{\top}$ neumí ani omylem (k tomu se vrátíme v 3.5).</p>
+</div>
+
+<h3 class="sub" id="sec3-3"><span class="num">3.3</span>Mechanika: dotaz, klíč, hodnota, skóre, softmax, vážený součet</h3>
+<div class="prose">
+<p>Teď, když víme, <strong>proč</strong> projekce existují, můžeme bez obav sepsat celý výpočet. Kromě dotazu a klíče zavedeme ještě třetí projekci — <strong>hodnotu</strong> (value) $v_i = x_i W_V$ — která určuje, <em>co</em> token reálně předá dál (proč zvlášť, vysvětlíme v 3.6). Maticově, pro celou sekvenci naráz:</p>
+<p>$$Q = X W_Q,\qquad K = X W_K,\qquad V = X W_V.$$</p>
+<span class="smallnote"><b>$Q,K,V$</b> = matice dotazů, klíčů a hodnot (řádek = jeden token); <b>$W_V$</b> = naučená projekce hodnoty, rozměr $d\times d_v$; <b>$V$</b> zde značí matici hodnot (nezaměňovat s velikostí slovníku, kterou důsledně píšeme $|\mathcal{V}|$).</span>
+<p><strong>Skóre.</strong> Pro každou dvojici tokenů spočítáme, jak relevantní je token $j$ pro token $i$, jako škálovaný skalární součin dotazu s klíčem:</p>
+<p>$$S = \frac{QK^{\top}}{\sqrt{d_k}}\in\mathbb{R}^{n\times n},\qquad S_{ij} = \frac{q_i\cdot k_j}{\sqrt{d_k}}.$$</p>
+<span class="smallnote"><b>$S$</b> = matice skóre ($n\times n$); <b>$S_{ij}$</b> = relevance tokenu $j$ pro token $i$; význam $\sqrt{d_k}$ rozebereme v 3.4.</span>
+<p><strong>Softmax.</strong> Na každý řádek $S$ pustíme funkci softmax, čímž dostaneme matici vah $A$ s nezápornými prvky, jejichž součet v každém řádku je 1:</p>
+<p>$$A = \mathrm{softmax}(S),\qquad a_{ij} = \frac{e^{S_{ij}}}{\sum_{j'} e^{S_{ij'}}}.$$</p>
+<span class="smallnote"><b>$A$</b> = matice vah pozornosti; <b>$a_{ij}$</b> = váha, s jakou si token $i$ bere od tokenu $j$. Softmax dělá z relevance soutěž: každý token rozděluje 100 % své pozornosti mezi všechny ostatní.</span>
+<p><strong>Vážený součet.</strong> Syrový výstup vrstvy pozornosti pro token $i$ je vážený průměr hodnot všech tokenů, kde váhy určuje právě $A$. Tomuto výstupu budeme říkat <em>kontextová korekce</em> $c_i$ (matici z nich značíme $C$):</p>
+<p>$$c_i = \sum_j a_{ij}\,v_j,\qquad\text{tedy maticově}\qquad C = A\,V.$$</p>
+<span class="smallnote"><b>$C$</b> = syrový výstup vrstvy pozornosti (kontextová korekce), rozměr $n\times d$; <b>$c_i$</b> = jeho $i$-tý řádek. Pozor na rozlišení, které dodržujeme v celém textu: <b>$C$ je jen ta korekce</b>, kterou vrstva pozornosti spočítá, kdežto <b>definitivní kontextualizovaná reprezentace $Z$</b> vznikne teprve jejím přičtením k původnímu vstupu, $Z = X + C$ (toto přičtení je reziduální spojení, podrobně v sekci 6). V rámci sekce 3 nás zajímá hlavně samotná korekce $C$.</span>
+<p>Celé to lze zapsat jediným řádkem — funkce $\mathrm{Attn}(X)$ vracející korekci $C$, úplná definice (jedné hlavy) self-attention:</p>
+<p>$$C = \mathrm{Attn}(X) = \mathrm{softmax}\!\left(\frac{X W_Q (X W_K)^{\top}}{\sqrt{d_k}}\right)X W_V,\qquad Z = X + C.$$</p>
+<p>Vedle „tenisty“ se tak „raketa“ natáhne k tenisovému významu, vedle „Měsíce“ ke kosmickému. Vyjasnění významu z&nbsp;Obr.&nbsp;5 není vedlejší produkt — je to doslova to, co tento vážený součet počítá (Obr. 7).</p>
+</div>
+
+<figure class="diagram"><svg viewBox="0 0 700 340" role="img">
+<title>Self-attention: jeden dotaz se dívá na všechny tokeny s různou vahou</title>
+<desc>Token sat vysílá vlákna ke všem ostatním tokenům ve větě; tloušťka vlákna odpovídá vypočítané váze pozornosti.</desc>
+<text class="ts" x="350" y="34" text-anchor="middle">Token „sat“ se dívá na celou větu — tloušťka vlákna = váha pozornosti a_ij</text>
+<line stroke="#EF9F27" stroke-linecap="round" x1="350" y1="210" x2="126" y2="120" stroke-width="1" opacity="0.25"/>
+<line stroke="#EF9F27" stroke-linecap="round" x1="350" y1="210" x2="238" y2="120" stroke-width="3.5" opacity="0.85"/>
+<line stroke="#EF9F27" stroke-linecap="round" x1="350" y1="210" x2="350" y2="120" stroke-width="4.5" opacity="1.0"/>
+<line stroke="#EF9F27" stroke-linecap="round" x1="350" y1="210" x2="462" y2="120" stroke-width="2.5" opacity="0.65"/>
+<line stroke="#EF9F27" stroke-linecap="round" x1="350" y1="210" x2="574" y2="120" stroke-width="1" opacity="0.2"/>
+<g class="c-gray"><rect x="90" y="84" width="72" height="36" rx="6" stroke-width="0.5"/></g>
+<g class="c-gray"><rect x="202" y="84" width="72" height="36" rx="6" stroke-width="0.5"/></g>
+<g class="c-amber"><rect x="314" y="84" width="72" height="36" rx="6" stroke-width="1"/></g>
+<g class="c-gray"><rect x="426" y="84" width="72" height="36" rx="6" stroke-width="0.5"/></g>
+<g class="c-gray"><rect x="538" y="84" width="72" height="36" rx="6" stroke-width="0.5"/></g>
+<text class="ts" x="126" y="102" text-anchor="middle" dominant-baseline="central">the</text>
+<text class="ts" x="238" y="102" text-anchor="middle" dominant-baseline="central">cat</text>
+<text class="th" x="350" y="102" text-anchor="middle" dominant-baseline="central">sat</text>
+<text class="ts" x="462" y="102" text-anchor="middle" dominant-baseline="central">on</text>
+<text class="ts" x="574" y="102" text-anchor="middle" dominant-baseline="central">the</text>
+<g class="c-amber"><rect x="290" y="210" width="120" height="40" rx="6" stroke-width="1"/></g>
+<text class="th" x="350" y="230" text-anchor="middle" dominant-baseline="central">dotaz q (token „sat“)</text>
+<text class="ts" x="350" y="294" text-anchor="middle">Korekce c = vážený součet hodnot v všech tokenů</text>
+<text class="ts" x="350" y="314" text-anchor="middle">„sat“ si nejvíc bere od „cat“ (svého podmětu) a sebe sama</text>
+</svg>
+<figcaption><b>Obr. 7.</b> Jeden dotaz vůči celé sekvenci. Na rozdíl od konvoluce, kde jsou váhy fixní parametry sdílené přes pozice, jsou zde „spoje“ mezi tokeny <b>dynamické</b> — vznikají za běhu jako skalární součiny a stejná vrstva se chová jinak podle vstupu.</figcaption>
+</figure>
+
+<h3 class="sub" id="sec3-4"><span class="num">3.4</span>Škálování √d<sub>k</sub></h3>
+<div class="prose">
+<p>Zbývá vysvětlit ten dělitel $\sqrt{d_k}$. Není to kosmetika, ale nutnost. Ve vysoké dimenzi $d_k$ roste skalární součin dvou náhodných vektorů typicky úměrně $\sqrt{d_k}$, takže bez škálování by skóre nabývalo velkých hodnot. Softmax na velkých vstupech se „nasytí“ — téměř veškerá váha skočí na jediný token a pro ostatní zůstane prakticky nula. Tam, kde je softmax saturovaný, je jeho gradient blízký nule, takže by se síť přestala učit. Dělení $\sqrt{d_k}$ vrací hodnoty do rozumného rozsahu a gradient zůstane zdravý.</p>
+<span class="smallnote">Heuristika: pokud mají složky $q_i,k_j$ jednotkový rozptyl, má $q_i\cdot k_j$ rozptyl řádu $d_k$; dělení $\sqrt{d_k}$ vrátí rozptyl zpět na řád 1.</span>
+</div>
+
+<h3 class="sub" id="sec3-5"><span class="num">3.5</span>Směrovost a vlastní skóre — bilineární forma M</h3>
+<div class="prose">
+<p>Tato podkapitola je hlubší dovysvětlení a lze ji při prvním čtení přeskočit; objasňuje ale dvě věci, které studenty často matou: proč je porovnání <strong>směrové</strong> (nesymetrické) a proč si token <strong>nezačne automaticky všímat hlavně sebe sama</strong>.</p>
+<p>Rozepišme skóre (bez škálování) přes definice $Q=XW_Q$, $K=XW_K$:</p>
+<p>$$QK^{\top} = X W_Q (X W_K)^{\top} = X \underbrace{\big(W_Q W_K^{\top}\big)}_{M}\, X^{\top}.$$</p>
+<p>Celá matice skóre je tedy <strong>bilineární forma</strong> $XMX^{\top}$ s jedinou naučenou maticí $M = W_Q W_K^{\top}\in\mathbb{R}^{d\times d}$.</p>
+<span class="smallnote"><b>$M$</b> = bilineární matice skóre. Matice $W_Q,W_K$ zvlášť jsou jen nízkohodnostní faktorizace $M$ na rozměr $d_k$ — žádná hlubší magie.</span>
+<p><strong>Směrovost.</strong> Protože $M$ obecně <em>není symetrická</em>, platí $S_{ij}\ne S_{ji}$ — „jak moc se sat dívá na cat“ může být úplně jiné číslo než „jak moc se cat dívá na sat“. U kosinové podobnosti (a u holého $XX^{\top}$) by obě čísla musela být stejná. Mimochodem proto attention <strong>není</strong> čistě kosinová podobnost: kosinus normalizuje délky pryč a zajímá ho jen úhel, kdežto skalární součin $q\cdot k=\lVert q\rVert\,\lVert k\rVert\cos\theta$ nese i délky — token může mít „hlasitý“ klíč s velkou normou a přitahovat pozornost i bez dokonalého zarovnání směru.</p>
+<span class="smallnote"><b>$\theta$</b> = úhel mezi vektory; <b>$\lVert\cdot\rVert$</b> = norma (délka) vektoru.</span>
+<p><strong>Vlastní skóre.</strong> Studenti často tuší, že po projekci „korelace slova sama se sebou“ klesne k nule. Diagnóza je správná, závěr přestřelený. Bez projekce by skóre bylo $S=XX^{\top}$, takže na diagonále stojí $S_{ii}=\lVert x_i\rVert^2$, což je podle Cauchyovy–Schwarzovy nerovnosti řádkové maximum — každý token by koukal hlavně sám na sebe (degenerace). Projekce tuto degeneraci skutečně ruší, ale <em>nenahrazuje ji vynucenou nulou</em>. Vlastní skóre je teď $S_{ii}=x_i M x_i^{\top}$, hodnota kvadratické formy, která může vyjít velká kladná, záporná i malá. Rozložme $M$ na symetrickou a antisymetrickou část:</p>
+<p>$$M = M_{\text{sym}} + M_{\text{anti}},\qquad M_{\text{sym}}=\tfrac12(M+M^{\top}),\quad M_{\text{anti}}=\tfrac12(M-M^{\top}).$$</p>
+<p>Pro antisymetrickou část platí $x M_{\text{anti}} x^{\top}=0$ pro <strong>každé</strong> $x$, takže na diagonálu (a tím na všechna vlastní skóre) přispívá výhradně symetrická část, kdežto veškerou směrovost nese jen ta antisymetrická:</p>
+<p>$$S_{ii} = x_i\,M_{\text{sym}}\,x_i^{\top},\qquad S_{ij}-S_{ji} = 2\,x_i\,M_{\text{anti}}\,x_j^{\top}.$$</p>
+<p>Vlastní skóre by tedy bylo nula jen v degenerovaném případě $M_{\text{sym}}\approx0$, který trénink nemá důvod produkovat. V praxi je silná self-attention běžná a užitečná (token si nese vlastní hodnotu dál). Některé hlavy mají diagonálu dominantní, jiné potlačenou — je to <strong>naučené</strong>, ne vynucené ani k maximu, ani k nule (Obr. 8).</p>
+</div>
+
+<figure class="diagram"><svg viewBox="0 0 700 312" role="img">
+<title>Rozklad matice skóre M na symetrickou a antisymetrickou část</title>
+<desc>Matice M se rozkládá na symetrickou část, která řídí vlastní skóre na diagonále, a antisymetrickou část, která řídí směrovost a na diagonálu přispívá nula.</desc>
+<defs>
+<marker id="ar_m" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+</defs>
+<g class="c-gray"><rect x="250" y="24" width="200" height="52" rx="6" stroke-width="0.5"/></g>
+<text class="th" x="350" y="42" text-anchor="middle" dominant-baseline="central">M = W_Q W_Kᵀ</text>
+<text class="ts" x="350" y="60" text-anchor="middle" dominant-baseline="central">matice skóre</text>
+<line x1="322" y1="76" x2="215" y2="134" class="arr" stroke="var(--t)" marker-end="url(#ar_m)"/>
+<line x1="378" y1="76" x2="485" y2="134" class="arr" stroke="var(--t)" marker-end="url(#ar_m)"/>
+<g class="c-teal"><rect x="70" y="138" width="260" height="56" rx="6" stroke-width="0.5"/></g>
+<text class="th" x="200" y="158" text-anchor="middle" dominant-baseline="central">M_sym = ½(M + Mᵀ)</text>
+<text class="ts" x="200" y="178" text-anchor="middle" dominant-baseline="central">symetrická část</text>
+<g class="c-amber"><rect x="370" y="138" width="260" height="56" rx="6" stroke-width="0.5"/></g>
+<text class="th" x="500" y="158" text-anchor="middle" dominant-baseline="central">M_anti = ½(M − Mᵀ)</text>
+<text class="ts" x="500" y="178" text-anchor="middle" dominant-baseline="central">antisymetrická část</text>
+<line x1="200" y1="194" x2="200" y2="236" class="arr" stroke="var(--t)" marker-end="url(#ar_m)"/>
+<line x1="500" y1="194" x2="500" y2="236" class="arr" stroke="var(--t)" marker-end="url(#ar_m)"/>
+<g class="c-coral"><rect x="70" y="238" width="260" height="58" rx="6" stroke-width="0.5"/></g>
+<text class="th" x="200" y="259" text-anchor="middle" dominant-baseline="central">vlastní skóre na diagonále</text>
+<text class="ts" x="200" y="280" text-anchor="middle" dominant-baseline="central">S_ii = x_i ·M_sym ·x_iᵀ</text>
+<g class="c-coral"><rect x="370" y="238" width="260" height="58" rx="6" stroke-width="0.5"/></g>
+<text class="th" x="500" y="259" text-anchor="middle" dominant-baseline="central">směrový rozdíl skóre</text>
+<text class="ts" x="500" y="280" text-anchor="middle" dominant-baseline="central">S_ij − S_ji = 2 ·x_i ·M_anti ·x_jᵀ</text>
+</svg>
+<figcaption><b>Obr. 8.</b> Rozklad bilineární matice <span style="font-style:italic">M</span>. Vlastní skóre řídí jen symetrická část; antisymetrická k diagonále přispívá přesně 0 a nese veškerou směrovost.</figcaption>
+</figure>
+
+<h3 class="sub" id="sec3-6"><span class="num">3.6</span>Proč ještě projekce W<sub>V</sub></h3>
+<div class="prose">
+<p>Zbývá poslední otázka mechaniky: máme váhy $A$ — proč je neaplikujeme rovnou na holé $X$ (tedy $AX$), ale až na $XW_V$? Jsou pro to dva pádné důvody.</p>
+<p><strong>1. Expresivita.</strong> Kdybychom počítali $AX$, je každý výstupní řádek <em>převážený průměr původních embeddingů</em>. Protože jsou váhy nezáporné a sčítají se do 1, je výstup vždy konvexní kombinací vstupních řádků — nikdy neopustí prostor vstupních vektorů. Vrstva by uměla jen <em>přemíchávat</em> to, co už má, a naskládáním vrstev na sebe bychom pořád dokola jen průměrovali tytéž vektory. Projekce $W_V$ dává obsahové cestě <strong>vlastní naučené váhy</strong>, takže výstup žije v naučeném prostoru, ne jen v konvexním obalu vstupů.</p>
+<p><strong>2. Oddělení dvou rolí.</strong> Matice $A$ řídí, <em>koho</em> posloucháš (to vzešlo z $Q,K$). <em>Co</em> si od něj vezmeš, je nezávislá otázka — a $W_V$ je přesně ta vrstva pro „co se předá“. Bez ní by „podle čeho se páruji“ a „co reálně teče“ byl tentýž vektor, ač jsou to dvě role, které chceme mít oddělené (Obr. 9).</p>
+</div>
+
+<figure class="diagram"><svg viewBox="0 0 700 200" role="img">
+<title>Proč se váhy aplikují na X·W_V a ne na holé X</title>
+<desc>Bez W_V je výstup jen převážený průměr původních embeddingů. S W_V míchá obsahová cesta naučený výtažek a má vlastní váhy.</desc>
+<defs>
+<marker id="ar_wv" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+</defs>
+<line x1="350" y1="34" x2="350" y2="162" stroke="var(--t)" stroke-width="0.5" stroke-dasharray="4 4" opacity="0.5"/>
+<text class="th" x="180" y="44" text-anchor="middle">Bez W_V</text>
+<g class="c-amber"><rect x="40" y="72" width="58" height="44" rx="6" stroke-width="1"/></g><text class="th" x="69" y="90" text-anchor="middle" dominant-baseline="central">A</text><text class="ts" x="69" y="106" text-anchor="middle" dominant-baseline="central">váhy</text>
+<text class="th" x="108" y="94" text-anchor="middle" dominant-baseline="central">×</text>
+<g class="c-gray"><rect x="120" y="72" width="84" height="44" rx="6" stroke-width="0.5"/></g><text class="th" x="162" y="90" text-anchor="middle" dominant-baseline="central">X</text><text class="ts" x="162" y="106" text-anchor="middle" dominant-baseline="central">holé</text>
+<line x1="206" y1="94" x2="232" y2="94" class="arr" stroke="var(--t)" marker-end="url(#ar_wv)"/>
+<g class="c-coral"><rect x="236" y="72" width="84" height="44" rx="6" stroke-width="0.5"/></g><text class="th" x="278" y="94" text-anchor="middle" dominant-baseline="central">výstup</text>
+<text class="ts" x="180" y="138" text-anchor="middle">jen průměr původních embeddingů</text>
+<text class="ts" x="180" y="156" text-anchor="middle">obsah se nemá z čeho učit</text>
+<text class="th" x="515" y="44" text-anchor="middle">S W_V</text>
+<g class="c-amber"><rect x="367" y="72" width="58" height="44" rx="6" stroke-width="1"/></g><text class="th" x="396" y="90" text-anchor="middle" dominant-baseline="central">A</text><text class="ts" x="396" y="106" text-anchor="middle" dominant-baseline="central">váhy</text>
+<text class="th" x="435" y="94" text-anchor="middle" dominant-baseline="central">×</text>
+<g class="c-teal"><rect x="447" y="72" width="108" height="44" rx="6" stroke-width="1"/></g><text class="th" x="501" y="90" text-anchor="middle" dominant-baseline="central">X ·W_V</text><text class="ts" x="501" y="106" text-anchor="middle" dominant-baseline="central">naučený obsah</text>
+<line x1="557" y1="94" x2="581" y2="94" class="arr" stroke="var(--t)" marker-end="url(#ar_wv)"/>
+<g class="c-coral"><rect x="583" y="72" width="68" height="44" rx="6" stroke-width="0.5"/></g><text class="th" x="617" y="94" text-anchor="middle" dominant-baseline="central">výstup</text>
+<text class="ts" x="515" y="138" text-anchor="middle">míchá naučený výtažek z tokenů</text>
+<text class="ts" x="515" y="156" text-anchor="middle">obsahová cesta má vlastní váhy</text>
+</svg>
+<figcaption><b>Obr. 9.</b> Role $W_V$. Díky asociativitě je u jedné hlavy $A(XW_V)=(AX)W_V$, takže nejde o to, <b>kde</b> $W_V$ stojí, ale o to, že tam <b>vůbec je</b>. Bez ní vrstva jen průměruje vstupy.</figcaption>
+</figure>
+
+<h3 class="sub" id="sec3-7"><span class="num">3.7</span>Pohled neuronové sítě: husté vrstvy + dynamické směrování</h3>
+<div class="prose">
+<p>Pro čtenáře, kterého maticová terminologie spíš mate než pomáhá, existuje <strong>lepší mentální model</strong> — a pro odborníka na neuronové sítě je dokonce přirozenější. Násobení $XW$ s maticí $W$ o rozměru např. $512\times64$ totiž <strong>není nic jiného než hustá (lineární) vrstva se 64 neurony bez biasu a bez aktivace</strong>, kterou prožen­eme každý token (řádek) zvlášť. Prvky matice <em>jsou</em> synaptické váhy té vrstvy. Žádná jiná magie v tom není. Tuto paralelu — <em>násobení maticí</em> ⟷ <em>průchod lineární vrstvou neuronů</em> — budeme používat v celém zbytku textu vedle suchých vzorců.</p>
+<p>Self-attention se tak přeloží na <strong>čtyři malé husté vrstvy</strong> a dvě netradiční operace mezi nimi:</p>
+<ul>
+<li>tři vrstvy ($W_Q,W_K,W_V$) prožen­ou embedding tokenu a vyrobí z něj tři aktivace — dotaz, klíč, hodnotu (sdílené napříč pozicemi, přesně jako konvoluce $1\times1$);</li>
+<li>čtvrtá vrstva ($W_O$, viz sekce 4) přijde na konci.</li>
+</ul>
+<p>A teď to podstatné — <strong>dvě operace v pozornosti husté vrstvy nejsou</strong>, a právě ony jsou jediné nové, co transformer přináší nad obyčejný feedforward:</p>
+<ol>
+<li><strong>Skóre $q\cdot k$</strong> je skalární součin aktivací dvou <em>různých</em> tokenů — žádné učitelné váhy, jen porovnání.</li>
+<li><strong>Vážený součet hodnot</strong> kombinuje hodnoty váhami, které jsou výstupem softmaxu, tedy <strong>spočítané za běhu</strong>, ne zmrazené po tréninku.</li>
+</ol>
+<p>V obyčejné husté vrstvě jsou váhy po natrénování pevné; tady se mixovací váhy přepočítají pro každý vstup znovu. Tomuto <strong>dynamickému směrování bez vah</strong> vděčí transformer za celou svou sílu (Obr. 10).</p>
+</div>
+
+<figure class="diagram"><svg viewBox="0 0 700 250" role="img">
+<title>Pozornost jako husté vrstvy plus dynamické směrování</title>
+<desc>W_Q, W_K, W_V a W_O jsou obyčejné husté vrstvy s naučenými vahami. Skóre q·k a vážený součet hodnot jsou dynamické operace bez fixních vah, počítané za běhu.</desc>
+<defs>
+<marker id="ar_nn" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+</defs>
+<rect x="35" y="25" width="10" height="10" rx="2" class="c-teal"/>
+<text class="ts" x="52" y="30" dominant-baseline="central">hustá vrstva (naučené váhy)</text>
+<rect x="350" y="25" width="10" height="10" rx="2" class="c-amber" stroke-dasharray="4 3"/>
+<text class="ts" x="368" y="30" dominant-baseline="central">dynamická operace (bez fixních vah)</text>
+<g class="c-gray"><rect x="20" y="70" width="124" height="52" rx="6" stroke-width="0.5"/></g>
+<text class="th" x="82" y="88" text-anchor="middle" dominant-baseline="central">token x_i</text>
+<text class="ts" x="82" y="106" text-anchor="middle" dominant-baseline="central">d čísel</text>
+<line x1="144" y1="96" x2="176" y2="96" class="arr" stroke="var(--t)" marker-end="url(#ar_nn)"/>
+<g class="c-teal"><rect x="178" y="70" width="124" height="52" rx="6" stroke-width="1"/></g>
+<text class="th" x="240" y="88" text-anchor="middle" dominant-baseline="central">3 husté vrstvy</text>
+<text class="ts" x="240" y="106" text-anchor="middle" dominant-baseline="central">→ q, k, v</text>
+<line x1="302" y1="96" x2="334" y2="96" class="arr" stroke="var(--t)" marker-end="url(#ar_nn)"/>
+<g class="c-amber"><rect x="336" y="70" width="148" height="52" rx="6" stroke-width="1" stroke-dasharray="5 4"/></g>
+<text class="th" x="410" y="88" text-anchor="middle" dominant-baseline="central">q ·kᵀ → softmax</text>
+<text class="ts" x="410" y="106" text-anchor="middle" dominant-baseline="central">váhy spočítané za běhu</text>
+<line x1="484" y1="96" x2="516" y2="96" class="arr" stroke="var(--t)" marker-end="url(#ar_nn)"/>
+<g class="c-amber"><rect x="518" y="70" width="142" height="52" rx="6" stroke-width="1" stroke-dasharray="5 4"/></g>
+<text class="th" x="589" y="88" text-anchor="middle" dominant-baseline="central">Σ a ·v</text>
+<text class="ts" x="589" y="106" text-anchor="middle" dominant-baseline="central">dynamické míchání</text>
+<path d="M589,122 L589,150 L92,150 L92,178" fill="none" stroke="var(--t)" stroke-width="1.5" marker-end="url(#ar_nn)"/>
+<g class="c-gray"><rect x="30" y="180" width="124" height="52" rx="6" stroke-width="0.5"/></g>
+<text class="th" x="92" y="198" text-anchor="middle" dominant-baseline="central">×h hlav → concat</text>
+<line x1="154" y1="206" x2="186" y2="206" class="arr" stroke="var(--t)" marker-end="url(#ar_nn)"/>
+<g class="c-teal"><rect x="188" y="180" width="124" height="52" rx="6" stroke-width="1"/></g>
+<text class="th" x="250" y="198" text-anchor="middle" dominant-baseline="central">hustá vrstva W_O</text>
+<text class="ts" x="250" y="216" text-anchor="middle" dominant-baseline="central">míchá hlavy</text>
+<line x1="312" y1="206" x2="344" y2="206" class="arr" stroke="var(--t)" marker-end="url(#ar_nn)"/>
+<g class="c-coral"><rect x="346" y="180" width="124" height="52" rx="6" stroke-width="1"/></g>
+<text class="th" x="408" y="198" text-anchor="middle" dominant-baseline="central">korekce c_i</text>
+<text class="ts" x="408" y="216" text-anchor="middle" dominant-baseline="central">d čísel</text>
+</svg>
+<figcaption><b>Obr. 10.</b> Pozornost očima neuronové sítě. Matice $W_Q,W_K,W_V,W_O$ jsou obyčejné husté vrstvy; jediné nové jsou prostřední dvě operace bez vah — porovnání $q\cdot k$ a vážený součet, který se přepočítá pro každý vstup znovu.</figcaption>
+</figure>
+
+<h3 class="sub" id="sec3-8"><span class="num">3.8</span>Příklad krok za krokem: „Máma mele maso“</h3>
+<div class="mm">
+<div class="prose">
+<p><strong>Proč ještě jeden příklad.</strong> Celý mechanismus jsme vybudovali obecně. Teď ho ale spustíme na jediné, záměrně triviální české větě <strong>„Máma mele maso“</strong> — tři slova, tři tokeny — a projdeme úplně každý mezikrok s konkrétními čísly. Cílem je, aby čtenář viděl, jak z holých embeddingů vznikne kontext, a aby si mohl všechno přepočítat tužkou. Každé slovo má svou barvu: <span class="mm-chip mm-c-mama">Máma</span>, <span class="mm-chip mm-c-mele">mele</span>, <span class="mm-chip mm-c-maso">maso</span>.</p>
+
+<p><strong>Tři role jednoho slova (připomenutí).</strong> Z embeddingu každého slova vyrobíme jeho tři projekce z oddílu 3.3: <em>dotaz</em> $q$ („co hledám?“), <em>klíč</em> $k$ („podle čeho mě ostatní najdou?“) a <em>hodnotu</em> $v$ („co předám dál?“). V matici pozornosti pak <strong>řádek je slovo, které se ptá</strong> (jeho $q$), a <strong>sloupec je slovo, na které se dívá</strong> (jeho $k$). Celá pipeline na naší větě vypadá takto (Obr. 11).</p>
+</div>
+
+<figure class="diagram">
+<svg viewBox="0 0 700 210" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="ar_mm1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></marker>
+</defs>
+<!-- X -->
+<g class="c-gray"><rect x="14" y="78" width="92" height="50" rx="10"/></g>
+<text class="th" x="60" y="99" text-anchor="middle" dominant-baseline="central">X</text>
+<text class="ts" x="60" y="115" text-anchor="middle" dominant-baseline="central">embeddingy</text>
+<text class="ts" x="60" y="150" text-anchor="middle">Máma · mele · maso</text>
+<!-- Q K V -->
+<g class="c-teal"><rect x="168" y="24" width="68" height="36" rx="8"/></g><text class="t" x="202" y="42" text-anchor="middle" dominant-baseline="central">Q</text>
+<g class="c-amber"><rect x="168" y="85" width="68" height="36" rx="8"/></g><text class="t" x="202" y="103" text-anchor="middle" dominant-baseline="central">K</text>
+<g class="c-coral"><rect x="168" y="146" width="68" height="36" rx="8"/></g><text class="t" x="202" y="164" text-anchor="middle" dominant-baseline="central">V</text>
+<path d="M106,98 C140,98 140,42 166,42" class="arr" stroke="var(--t)" marker-end="url(#ar_mm1)"/>
+<path d="M106,103 L166,103" class="arr" stroke="var(--t)" marker-end="url(#ar_mm1)"/>
+<path d="M106,108 C140,108 140,164 166,164" class="arr" stroke="var(--t)" marker-end="url(#ar_mm1)"/>
+<text class="ts" x="150" y="16" text-anchor="middle">projekce W_Q, W_K, W_V</text>
+<!-- A -->
+<g class="c-gray"><rect x="300" y="46" width="104" height="104" rx="10"/></g>
+<text class="ts" x="352" y="40" text-anchor="middle">A = Q·Kᵀ (3×3)</text>
+<g transform="translate(316,62)">
+<rect width="72" height="72" rx="5" fill="none" stroke="#cfc8bb"/>
+<rect x="2" y="2" width="20" height="20" rx="3" fill="#1D9E75" opacity="0.42"/><rect x="26" y="2" width="20" height="20" rx="3" fill="#1D9E75" opacity="0.30"/><rect x="50" y="2" width="20" height="20" rx="3" fill="#1D9E75" opacity="0.26"/>
+<rect x="2" y="26" width="20" height="20" rx="3" fill="#1D9E75" opacity="0.24"/><rect x="26" y="26" width="20" height="20" rx="3" fill="#1D9E75" opacity="0.34"/><rect x="50" y="26" width="20" height="20" rx="3" fill="#1D9E75" opacity="0.40"/>
+<rect x="2" y="50" width="20" height="20" rx="3" fill="#1D9E75" opacity="0.22"/><rect x="26" y="50" width="20" height="20" rx="3" fill="#1D9E75" opacity="0.34"/><rect x="50" y="50" width="20" height="20" rx="3" fill="#1D9E75" opacity="0.44"/>
+</g>
+<path d="M236,42 C268,42 268,86 298,86" class="arr" stroke="#1D9E75" marker-end="url(#ar_mm1)"/>
+<path d="M236,103 L298,103" class="arr" stroke="#C77B16" marker-end="url(#ar_mm1)"/>
+<!-- softmax -->
+<g class="c-gray"><rect x="436" y="78" width="92" height="50" rx="10"/></g>
+<text class="t" x="482" y="103" text-anchor="middle" dominant-baseline="central">softmax</text>
+<path d="M404,103 L434,103" class="arr" stroke="var(--t)" marker-end="url(#ar_mm1)"/>
+<!-- C -->
+<g class="c-teal"><rect x="560" y="78" width="80" height="50" rx="10"/></g>
+<text class="th" x="600" y="99" text-anchor="middle" dominant-baseline="central">C</text>
+<text class="ts" x="600" y="115" text-anchor="middle" dominant-baseline="central">korekce</text>
+<path d="M528,103 L558,103" class="arr" stroke="var(--t)" marker-end="url(#ar_mm1)"/>
+<!-- V feeds C -->
+<path d="M236,164 C420,196 470,150 560,120" fill="none" stroke="#C2410C" stroke-width="1.3" stroke-dasharray="4 4" marker-end="url(#ar_mm1)"/>
+<text class="ts" x="430" y="190" text-anchor="middle">hodnoty V se váženě sečtou do korekce C</text>
+</svg>
+<figcaption><b>Obr. 11.</b> Celá cesta self-attention na větě „Máma mele maso“: embeddingy $X$ se projektují na $Q,K,V$; z $Q$ a $K$ vznikne matice skóre $A$, projde škálováním a softmaxem, a podle vah se sečtou hodnoty $V$ do <em>kontextové korekce</em> $C$. Definitivní kontextualizovaná matice je pak $Z = X + C$ (přičtení vstupu, sekce 6).</figcaption>
+</figure>
+
+<div class="prose">
+<p><strong>Devět pohledů: kdo se dívá na koho.</strong> Porovnáme každý dotaz s každým klíčem skalárním součinem — vyjde čtvercová tabulka 3×3, matice pozornosti $A$. V interaktivním Obr. 12 níže klikněte (nebo najeďte myší) na slovo a uvidíte, jak rozdělí svou pozornost; čísla v buňkách jsou už hotové <em>váhy</em> po softmaxu, takže každý řádek dává v součtu 1. Malým písmem je pod nimi i syrové skóre před softmaxem.</p>
+</div>
+
+<figure class="diagram">
+<div class="mm-picker" role="group" aria-label="Vyber slovo a sleduj, na co se dívá">
+  <span class="mm-lab">Vyber slovo:</span>
+  <button class="mm-tok" data-tok="0">Máma</button>
+  <button class="mm-tok on" data-tok="1">mele</button>
+  <button class="mm-tok" data-tok="2">maso</button>
+  <button class="mm-tok" data-tok="-1" style="border-style:dashed">vše</button>
+</div>
+<div class="mm-shell dim" id="mm-shell">
+  <table class="mm-attn" aria-label="Matice pozornosti 3 krát 3">
+    <tbody>
+    <tr>
+      <td class="mm-corner">řádek = dotaz ↓<br>sloupec = klíč →</td>
+      <th class="mm-colhead mm-h0">Máma</th>
+      <th class="mm-colhead mm-h1">mele</th>
+      <th class="mm-colhead mm-h2">maso</th>
+    </tr>
+    <tr data-row="0">
+      <th class="mm-rowhead mm-h0">Máma</th>
+      <td class="mm-cell r0" data-r="0"><span class="mm-expr">q(Máma)·k(Máma)</span><span class="mm-wt">0,41</span><span class="mm-raw">skóre 1,09</span></td>
+      <td class="mm-cell r0" data-r="0"><span class="mm-expr">q(Máma)·k(mele)</span><span class="mm-wt">0,31</span><span class="mm-raw">skóre 0,70</span></td>
+      <td class="mm-cell r0" data-r="0"><span class="mm-expr">q(Máma)·k(maso)</span><span class="mm-wt">0,28</span><span class="mm-raw">skóre 0,56</span></td>
+    </tr>
+    <tr data-row="1">
+      <th class="mm-rowhead mm-h1">mele</th>
+      <td class="mm-cell r1 lit" data-r="1"><span class="mm-expr">q(mele)·k(Máma)</span><span class="mm-wt">0,26</span><span class="mm-raw">skóre 0,70</span></td>
+      <td class="mm-cell r1 lit" data-r="1"><span class="mm-expr">q(mele)·k(mele)</span><span class="mm-wt">0,36</span><span class="mm-raw">skóre 1,16</span></td>
+      <td class="mm-cell r1 lit" data-r="1"><span class="mm-expr">q(mele)·k(maso)</span><span class="mm-wt">0,39</span><span class="mm-raw">skóre 1,28</span></td>
+    </tr>
+    <tr data-row="2">
+      <th class="mm-rowhead mm-h2">maso</th>
+      <td class="mm-cell r2" data-r="2"><span class="mm-expr">q(maso)·k(Máma)</span><span class="mm-wt">0,22</span><span class="mm-raw">skóre 0,56</span></td>
+      <td class="mm-cell r2" data-r="2"><span class="mm-expr">q(maso)·k(mele)</span><span class="mm-wt">0,36</span><span class="mm-raw">skóre 1,28</span></td>
+      <td class="mm-cell r2" data-r="2"><span class="mm-expr">q(maso)·k(maso)</span><span class="mm-wt">0,42</span><span class="mm-raw">skóre 1,48</span></td>
+    </tr>
+    </tbody>
+  </table>
+</div>
+<p class="mm-readout" id="mm-readout"><b>mele</b> rozdělí svou pozornost takto:&nbsp; <span class="mm-chip mm-c-maso">maso</span> 39% <span class="mm-bar" style="width:35px;background:var(--maso)"></span> &nbsp; <span class="mm-chip mm-c-mele">mele</span> 36% <span class="mm-bar" style="width:32px;background:var(--mele)"></span> &nbsp; <span class="mm-chip mm-c-mama">Máma</span> 26% <span class="mm-bar" style="width:23px;background:var(--mama)"></span></p>
+<figcaption><b>Obr. 12.</b> Interaktivní matice pozornosti $A$ pro větu „Máma mele maso“. Kliknutím na slovo se zvýrazní jeho řádek a pruhy ukážou, jak rozděluje pozornost. Sloveso <em>mele</em> dává největší váhu svému předmětu <em>maso</em> (0,39) — pozornost zachytila vztah <em>sloveso–předmět</em>, aniž bychom jí ho kdy řekli. (V tištěné verzi je zobrazen výchozí stav pro <em>mele</em>.)</figcaption>
+</figure>
+
+<div class="prose">
+<p><strong>Od syrového skóre k vahám.</strong> Skóre v buňkách jsou jen čísla; dvěma kroky z nich uděláme pravděpodobnostní váhy. Nejprve <em>škálování</em> dělením $\sqrt{d_k}$ (zde $d_k=2$), pak <em>softmax</em>, který řádek převede na kladná čísla se součtem 1. Rozepsáno pro řádek <span class="mm-chip mm-c-mele">mele</span>:</p>
+</div>
+<div class="mm-calc">
+skóre&nbsp;&nbsp;<span class="dim">=</span>&nbsp; [ <span class="q">0,70</span>, <span class="q">1,16</span>, <span class="q">1,28</span> ]<br>
+÷ √2&nbsp;&nbsp;<span class="dim">=</span>&nbsp; [ 0,50, 0,82, 0,91 ]<br>
+exp&nbsp;&nbsp;&nbsp;<span class="dim">=</span>&nbsp; [ 1,64, 2,27, 2,47 ]&nbsp;&nbsp;<span class="dim">(součet 6,38)</span><br>
+<span class="v">softmax</span>&nbsp;<span class="dim">=</span>&nbsp; [ <span class="v">0,26</span>, <span class="v">0,36</span>, <span class="v">0,39</span> ]
+<span class="cap">Každé číslo je podíl exp(skóre) ku součtu celého řádku — proto váhy nikdy nejsou záporné a vždy se sečtou do jedničky. To je přesně řádek <em>mele</em> v matici výše.</span>
+</div>
+
+<div class="prose">
+<p><strong>Vážený součet: kontextová korekce.</strong> Váhy z řádku konečně použijeme. Syrový výstup vrstvy pozornosti pro slovo je <em>vážený průměr hodnot</em> $V$ všech slov — kolik pozornosti, tolik vlivu. Tomuto výstupu říkáme <em>korekce</em> a značíme jej $c$. Pro <span class="mm-chip mm-c-mele">mele</span>:</p>
+</div>
+<div class="mm-eq">c(mele) = <span class="mm-term mm-t0">0,26</span> · <span class="mm-term mm-t0">v(Máma)</span> &nbsp;+&nbsp; <span class="mm-term mm-t1">0,36</span> · <span class="mm-term mm-t1">v(mele)</span> &nbsp;+&nbsp; <span class="mm-term mm-t2">0,39</span> · <span class="mm-term mm-t2">v(maso)</span></div>
+<div class="prose">
+<p>Protože <em>mele</em> dalo nejvíc váhy <em>masu</em>, jeho korekce je nejvíc „natažená“ směrem k masu — slovo si do sebe přimíchalo informaci o svém předmětu. Týž vážený součet uděláme pro každý řádek a vznikne celá matice korekcí $C$ (řádek $i$ je korekce $c_i$ pro $i$-té slovo).</p>
+
+<p><strong>Přičtení k původnímu slovu: vznik $Z$.</strong> Poslední drobnost, kterou rozvedeme v sekci 6: korekce $c$ se <em>přičte k původnímu embeddingu</em> slova (reziduální spojení), čímž teprve vznikne definitivní kontextualizovaný vektor $z$. Slovo si tak ponechá svou identitu a navíc získá informaci o okolí (to je ono $X\to Z$ z oddílu 3.1):</p>
+</div>
+<div class="mm-eq">z(mele) = <span class="mm-term mm-t1">c(mele)</span> + <span class="mm-term mm-t1">e(mele)</span></div>
+
+<div class="prose">
+<p><strong>Celý průchod v číslech.</strong> Aby si šlo vše ověřit tužkou, dosadíme malé dvourozměrné embeddingy a pro názornost položíme projekce $W_Q=W_K=W_V=I$ (jednotková matice), takže $q=k=v=e$. Jádro — skalární součin, softmax, vážený součet — zůstává stejné. Ověření prvního skóre ručně: $q(\text{Máma})\cdot k(\text{maso}) = 1{,}0\times0{,}2 + 0{,}3\times1{,}2 = 0{,}56$, což sedí s buňkou v matici.</p>
+</div>
+<div class="mm-numwrap"><table class="mm-num">
+<tbody>
+<tr><th>slovo</th><th>e — rozměr 1</th><th>e — rozměr 2</th></tr>
+<tr class="row-mama"><td class="lbl">Máma</td><td>1,0</td><td>0,3</td></tr>
+<tr class="row-mele"><td class="lbl">mele</td><td>0,4</td><td>1,0</td></tr>
+<tr class="row-maso"><td class="lbl">maso</td><td>0,2</td><td>1,2</td></tr>
+</tbody>
+</table></div>
+<div class="mm-numwrap"><table class="mm-num">
+<tbody>
+<tr><th>matice vah A</th><th>→ Máma</th><th>→ mele</th><th>→ maso</th></tr>
+<tr class="row-mama"><td class="lbl">Máma</td><td>0,41</td><td>0,31</td><td>0,28</td></tr>
+<tr class="row-mele"><td class="lbl">mele</td><td>0,26</td><td>0,36</td><td>0,39</td></tr>
+<tr class="row-maso"><td class="lbl">maso</td><td>0,22</td><td>0,36</td><td>0,42</td></tr>
+</tbody>
+</table></div>
+<div class="mm-numwrap"><table class="mm-num">
+<tbody>
+<tr><th>slovo</th><th>c — r.1</th><th>c — r.2</th><th>z = c + e</th></tr>
+<tr class="row-mama"><td class="lbl">Máma</td><td>0,59</td><td>0,77</td><td>(1,59, 1,07)</td></tr>
+<tr class="row-mele"><td class="lbl">mele</td><td>0,48</td><td>0,90</td><td>(0,88, 1,90)</td></tr>
+<tr class="row-maso"><td class="lbl">maso</td><td>0,45</td><td>0,93</td><td>(0,65, 2,13)</td></tr>
+</tbody>
+</table></div>
+<div class="prose">
+<p class="smallnote">Matice vah dávají v každém řádku součet 1 (drobné odchylky jsou jen zaokrouhlení na dvě desetinná místa). Embeddingy jsou zvolené ilustrativně tak, aby výsledná pozornost dávala jazykový smysl: sloveso se natahuje k předmětu.</p>
+
+<p><strong>Tři slova, jeden vzorec.</strong> Vše, čím jsme právě prošli, je rozepsání jediného řádku z oddílu 3.3 na naší větě — $Q K^{\top}$ jsou skalární součiny v matici $A$, $\mathrm{softmax}(\cdot/\sqrt{d_k})$ z nich udělá váhy a násobení $V$ je závěrečný vážený součet do korekce $C$ (a po přičtení vstupu vznikne $Z$). Stejný výpočet, který v reálném modelu běží paralelně přes tisíce tokenů a desítky vrstev, jsme tu provedli ručně na třech slovech.</p>
+</div>
+</div>
+
+
+<h2 class="sec" id="sec4"><span class="num">4.</span>Vícehlavá pozornost (multi-head) a projekce W<sub>O</sub></h2>
+<div class="prose">
+<p><strong>Problém.</strong> Jedna hlava (head) je přesně mechanismus ze sekce 3: jedna trojice $W_Q,W_K,W_V$, tedy <strong>jeden naučený vztah</strong> $M=W_QW_K^{\top}$ — jedna definice toho, „co je ke komu relevantní“. Háček je v tom, že výstup pro token je <em>jeden</em> vážený součet a kvůli softmaxu se váhy sčítají do jedničky, takže různé vztahy se o ten rozpočet <strong>perou</strong>. Když „kouše“ napálí 0,9 váhy na svůj podmět „pes“, zbývá mu jen 0,1 na předmět „muže“. Jedna hlava umí vyjádřit jen jednu směs.</p>
+<p>Jenže slovo souvisí s ostatními <strong>víc způsoby naráz</strong>: sloveso potřebuje podmět <em>i</em> předmět, k tomu třeba čas a příslovce; zájmeno potřebuje svůj antecedent. Nacpat to do jediného softmaxu znamená to zprůměrovat a část informace ztratit.</p>
+<p><strong>Řešení — víc hlav paralelně.</strong> Místo jedné trojice matic se použije $h$ trojic, každá promítá do menšího rozměru $d_k=d/h$, a <strong>každá hlava má vlastní softmax, tedy vlastní rozpočet a vlastní vztah</strong>. Jedna hlava se naučí „dívej se na podmět“, druhá „dívej se na předmět“, a nepřekážejí si.</p>
+<span class="smallnote"><b>$h$</b> = počet hlav (typicky 8, 16…); každá hlava má dimenzi $d_k=d/h$ (např. $512/8=64$).</span>
+<p>Matematicky je to jen $h$-krát zopakovaný výpočet z 3.3 a sešití na konci:</p>
+<p>$$\mathrm{head}_i=\mathrm{softmax}\!\left(\frac{(XW_Q^i)(XW_K^i)^{\top}}{\sqrt{d_k}}\right)X W_V^i,\qquad \mathrm{MultiHead}(X)=\mathrm{Concat}(\mathrm{head}_1,\dots,\mathrm{head}_h)\,W_O,$$</p>
+<p>kde každá $W_\bullet^i\in\mathbb{R}^{d\times d_k}$ a $W_O\in\mathbb{R}^{d\times d}$.</p>
+<span class="smallnote"><b>$\mathrm{head}_i$</b> = výstup $i$-té hlavy ($n\times d_k$); horní index $i$ u $W_Q^i$ atd. značí „matice patřící $i$-té hlavě“; <b>$W_O$</b> = výstupní projekce; <b>$\mathrm{Concat}$</b> = zřetězení (slepení) výstupů hlav po sloupcích.</span>
+<p>Dvě věci stojí za zdůraznění. Za prvé, <strong>vstupní rozměr tokenu zůstává $d$</strong> — nedělí se osmi. Co se dělí osmi, je jen výstupní šířka projekčních vrstev. Pozor na nuanci: <em>vstup každé hlavy je pořád celých $d$</em>; hlava nedostane „výřez“ tokenu (prvních 64 čísel), nýbrž celý $d$-rozměrný token a svou vlastní vrstvou si ho zkomprimuje do svých $d_k$. Osm hlav tedy čte tentýž token, jen každá přes jiné váhy do jiného podprostoru. Za druhé, multi-head <strong>není $h$-krát dražší</strong> než jedna velká hlava: rozměr $d$ se jen rozkrájí na $h$ podprostorů, takže osm hlav po 64 má dohromady $512\times512$ vah na každou z vrstev Q/K/V — tedy přesně tolik jako jedna vrstva $512\to512$. Nepřidáváme kapacitu, jen ji dělíme na nezávislé vztahy (Obr. 13).</p>
+</div>
+
+<figure class="diagram"><svg viewBox="0 0 700 348" role="img">
+<title>Multi-head attention: různé hlavy se učí různé vztahy a pak se slučují přes W_O</title>
+<desc>Pro sloveso kouše se jedna hlava naučí dívat na podmět pes, druhá na předmět muže. Každá má vlastní softmax, výstupy se zřetězí a sloučí maticí W_O.</desc>
+<defs>
+<marker id="art_mh" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#1D9E75" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker>
+<marker id="ara_mh" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#BA7517" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker>
+<marker id="arg_mh" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+</defs>
+<circle cx="80" cy="28" r="4" fill="#1D9E75"/><text class="ts" x="90" y="28" dominant-baseline="central">hlava 1: podmět (→ Pes)</text>
+<circle cx="320" cy="28" r="4" fill="#BA7517"/><text class="ts" x="330" y="28" dominant-baseline="central">hlava 2: předmět (→ muže)</text>
+<text class="ts" x="560" y="28" dominant-baseline="central">… + další hlavy</text>
+<path d="M343,116 Q302,58 262,116" fill="none" stroke="#1D9E75" stroke-width="5" stroke-linecap="round" marker-end="url(#art_mh)"/>
+<path d="M367,116 Q408,58 448,116" fill="none" stroke="#BA7517" stroke-width="5" stroke-linecap="round" marker-end="url(#ara_mh)"/>
+<g class="c-gray"><rect x="222" y="116" width="80" height="40" rx="6" stroke-width="0.5"/></g><text class="t" x="262" y="136" text-anchor="middle" dominant-baseline="central">Pes</text>
+<g class="c-amber"><rect x="310" y="116" width="90" height="40" rx="6" stroke-width="1"/></g><text class="th" x="355" y="136" text-anchor="middle" dominant-baseline="central">kouše</text>
+<g class="c-gray"><rect x="408" y="116" width="80" height="40" rx="6" stroke-width="0.5"/></g><text class="t" x="448" y="136" text-anchor="middle" dominant-baseline="central">muže</text>
+<line x1="343" y1="158" x2="330" y2="206" stroke="#1D9E75" stroke-width="2" marker-end="url(#art_mh)"/>
+<line x1="367" y1="158" x2="380" y2="206" stroke="#BA7517" stroke-width="2" marker-end="url(#ara_mh)"/>
+<g class="c-coral"><rect x="275" y="208" width="160" height="46" rx="6" stroke-width="0.5"/></g>
+<text class="th" x="355" y="226" text-anchor="middle" dominant-baseline="central">Concat → W_O</text>
+<text class="ts" x="355" y="244" text-anchor="middle" dominant-baseline="central">sloučení hlav</text>
+<line x1="355" y1="254" x2="355" y2="288" class="arr" stroke="var(--t)" marker-end="url(#arg_mh)"/>
+<g class="c-coral"><rect x="255" y="290" width="200" height="46" rx="6" stroke-width="1"/></g>
+<text class="th" x="355" y="308" text-anchor="middle" dominant-baseline="central">z(kouše)</text>
+<text class="ts" x="355" y="326" text-anchor="middle" dominant-baseline="central">nese podmět i předmět zároveň</text>
+<text class="ts" x="130" y="300" text-anchor="middle">každá hlava</text>
+<text class="ts" x="130" y="316" text-anchor="middle">= vlastní softmax,</text>
+<text class="ts" x="130" y="332" text-anchor="middle">vlastní vztah</text>
+</svg>
+<figcaption><b>Obr. 13.</b> Multi-head jako „banka filtrů nad vztahy“. Hlava se chová jako jeden filtr v konvoluční vrstvě: jeden filtr detekuje jeden vzor, proto jich má vrstva víc; jedna hlava zachytí jeden relační vzor, proto jich je víc.</figcaption>
+</figure>
+
+<div class="prose">
+<p><strong>K čemu je $W_O$.</strong> Všimněme si, že po zřetězení už <em>rozměr sedí</em> ($h\cdot d_k = d$) — $W_O$ tam tedy není kvůli tvaru. Problém je jinde: v holém zřetězení jsou bloky hlav jen <em>položené vedle sebe a nepromíchané</em>. Sloupce 1–64 patří výhradně hlavě 1, sloupce 65–128 hlavě 2 atd. — navzájem se nikdy nepotkaly. Matice $W_O$ ($d\times d$) je to naučené promíchání. Nejčistěji se to vidí z rozpisu: rozdělíme $W_O$ na řádkové bloky $W_O^i$ (po jednom na hlavu), pak</p>
+<p>$$\mathrm{Concat}(\mathrm{head}_1,\dots,\mathrm{head}_h)\,W_O \;=\; \sum_{i=1}^{h}\mathrm{head}_i\,W_O^i.$$</p>
+<p>Každá hlava se svým blokem $W_O^i$ „zvedne“ ze svého $d_k$-rozměrného podprostoru zpět do plných $d$ a všechny příspěvky se <strong>sečtou</strong>. $W_O$ tak dělá dvě věci najednou: zapíše každou hlavu zpět do společného prostoru a nechá je se zkombinovat — síť může užitečnou hlavu zesílit a nadbytečnou potlačit. Hezky to doplňuje dvojici „čti/zapiš“: $W_V^i$ určuje, <em>co</em> hlava ze sekvence přečte, $W_O^i$ určuje, <em>jak</em> se přečtené zapíše zpět.</p>
+</div>
+
+<h2 class="sec" id="sec5"><span class="num">5.</span>Poziční kódování</h2>
+
+<div class="prose">
+<p><strong>Skrytá vada, kterou je třeba odhalit.</strong> Vraťme se k jádru pozornosti a položme si nepříjemnou otázku, na kterou jsme zatím elegantně zapomněli: <em>ví vůbec self-attention, v jakém pořadí tokeny stojí?</em> Skóre mezi dvěma pozicemi $i$ a $j$ vzniklo jako $q_i\cdot k_j$ — skalární součin dotazu jednoho tokenu a klíče druhého. V tomto výpočtu ovšem <strong>nikde nevystupuje rozdíl $i-j$ ani absolutní hodnota indexů</strong>. Token „Bob“ vidí token „Alice“ úplně stejně, ať Alice stojí těsně před ním, nebo o deset slov dál. Pozornost zachází se vstupem jako s <em>množinou</em>, ne s <em>posloupností</em>.</p>
+
+<p><strong>Formálně: permutační ekvivariance.</strong> Označme $P$ libovolnou <em>permutační matici</em><span class="smallnote"> &nbsp;$P$ — čtvercová matice $n\times n$, která v každém řádku i sloupci má jedinou jedničku a jinak nuly; násobení $PX$ jen přeskládá řádky matice $X$, tj. přehází tokeny.</span> Pak pro celou vrstvu pozornosti platí</p>
+<p>$$\mathrm{Attn}(PX) \;=\; P\,\mathrm{Attn}(X).$$</p>
+<p>Slovy: <em>přeházím-li tokeny na vstupu, dostanu tytéž výstupy, jen ve stejném přeházeném pořadí.</em> Pozornost tedy není na pořadí slepá úplně — pořadí výstupů kopíruje pořadí vstupů — ale <strong>obsah</strong> každého výstupního vektoru na pořadí <em>nezávisí</em>. A to je katastrofa: věty „Alice volá Boba“ a „Bob volá Alici“ obsahují identickou množinu tří tokenů, takže by z nich pozornost (až na přeskládání) vyrobila <em>tytéž</em> kontextové vektory. Kdo komu volá, by se ztratilo (Obr. 14).</p>
+</div>
+
+<figure class="diagram">
+<svg viewBox="0 0 700 250" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="ar_pe1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+</defs>
+<text class="th" x="175" y="22" text-anchor="middle">„Alice volá Boba“</text>
+<text class="th" x="525" y="22" text-anchor="middle">„Bob volá Alici“</text>
+<g class="c-teal"><rect x="70" y="40" width="90" height="36" rx="6"/></g><text class="t" x="115" y="58" text-anchor="middle" dominant-baseline="central">Alice</text>
+<g class="c-amber"><rect x="170" y="40" width="80" height="36" rx="6"/></g><text class="t" x="210" y="58" text-anchor="middle" dominant-baseline="central">volá</text>
+<g class="c-gray"><rect x="260" y="40" width="90" height="36" rx="6"/></g><text class="t" x="305" y="58" text-anchor="middle" dominant-baseline="central">Boba</text>
+<g class="c-gray"><rect x="420" y="40" width="90" height="36" rx="6"/></g><text class="t" x="465" y="58" text-anchor="middle" dominant-baseline="central">Bob</text>
+<g class="c-amber"><rect x="520" y="40" width="80" height="36" rx="6"/></g><text class="t" x="560" y="58" text-anchor="middle" dominant-baseline="central">volá</text>
+<g class="c-teal"><rect x="610" y="40" width="80" height="36" rx="6"/></g><text class="t" x="650" y="58" text-anchor="middle" dominant-baseline="central">Alici</text>
+<text class="ts" x="350" y="110" text-anchor="middle">stejná množina tokenů → bez informace o pozici dá pozornost (až na pořadí) totéž</text>
+<line x1="175" y1="130" x2="175" y2="166" class="arr" stroke="var(--t)" marker-end="url(#ar_pe1)"/>
+<line x1="525" y1="130" x2="525" y2="166" class="arr" stroke="var(--t)" marker-end="url(#ar_pe1)"/>
+<g class="c-coral"><rect x="70" y="168" width="280" height="40" rx="6" stroke-width="0.5"/></g>
+<text class="t" x="210" y="188" text-anchor="middle" dominant-baseline="central">kdo je podmět? — nerozlišeno</text>
+<g class="c-coral"><rect x="420" y="168" width="270" height="40" rx="6" stroke-width="0.5"/></g>
+<text class="t" x="555" y="188" text-anchor="middle" dominant-baseline="central">kdo je podmět? — nerozlišeno</text>
+<text class="ts" x="350" y="234" text-anchor="middle">Lék: dodat každému tokenu informaci o jeho pozici dřív, než vstoupí do pozornosti.</text>
+</svg>
+<figcaption><b>Obr. 14.</b> Permutační ekvivariance pozornosti. Bez explicitní informace o pořadí jsou pro self-attention obě věty (až na přeskládání) nerozlišitelné — mizí role „kdo koho“. To je důvod, proč musíme do reprezentace tokenu vnést jeho <em>pozici</em>.</figcaption>
+</figure>
+
+<div class="prose">
+<p><strong>Co přesně chceme vyřešit.</strong> Potřebujeme každému tokenu přidat „razítko“ jeho pozice tak, aby:</p>
+<p>(a) dvě stejná slova na různých místech dostala <em>různé</em> razítko (jinak nerozlišíme „Alice volá Boba“ od „Boba volá Alice“);<br>
+(b) razítko bylo <em>ohraničené</em> — nesmí s délkou věty růst nade všechny meze, jinak by u dlouhých sekvencí přebilo samotný význam slova;<br>
+(c) model z razítek dokázal číst nejen <em>absolutní</em> pozici, ale hlavně <em>relativní</em> vzdálenosti („o dvě slova dál“), protože gramatické vztahy jsou typicky relativní.</p>
+
+<p><strong>Řešení původního transformeru: sinusové kódování.</strong> Autoři <a class="cit" href="#ref1">[ref_1]</a> navrhli ke každé pozici $i$ ($i=0,1,2,\dots$) přiřadit <em>poziční vektor</em> $p_i\in\mathbb{R}^{d}$ téže dimenze jako embedding, jehož složky jsou hodnoty sinů a kosinů o různých frekvencích. Trik je v tom, že $d$ souřadnic tohoto vektoru <strong>spárujeme po dvou</strong>: $m$-tou dvojici tvoří souřadnice s indexy $2m$ a $2m+1$ a vyplníme ji sinem a kosinem <em>jedné a téže</em> frekvence. Pro dvojici s indexem $m$ ($m=0,1,\dots,d/2-1$) tedy je</p>
+<p>$$p_{i,\,2m} \;=\; \sin\!\Big(\frac{i}{10000^{\,2m/d}}\Big), \qquad p_{i,\,2m+1} \;=\; \cos\!\Big(\frac{i}{10000^{\,2m/d}}\Big).$$</p>
+<p><span class="smallnote">$i$ — pozice tokenu v sekvenci (kolikáté slovo to je). Poziční vektor $p_i$ má $d$ souřadnic stejně jako embedding; těchto $d$ souřadnic rozdělíme na $d/2$ <em>dvojic</em> a $m$ je pořadové číslo takové dvojice ($m=0,1,\dots,d/2-1$). Dvojici $m$ tvoří dvě konkrétní sousední souřadnice vektoru: sudá s indexem $2m$ (do té jde sinus) a lichá s indexem $2m+1$ (do té jde kosinus); obě sdílejí <strong>tutéž frekvenci</strong> $1/10000^{\,2m/d}$. $m$ je tedy „číslo frekvenčního kanálu“, nikoli přímo jedna souřadnice — jedno $m$ zastupuje vždy dvě souřadnice (jeho sinovou a kosinovou). $d$ — dimenze embeddingu; konstanta $10000$ určuje rozsah vlnových délek od krátkých po velmi dlouhé.</span></p>
+
+<p>Tento vektor pak prostě <strong>přičteme</strong> k embeddingu tokenu, takže do vrstvy pozornosti vstupuje $x_i + p_i$ místo holého $x_i$. Tím je permutační symetrie zlomena: stejné slovo na pozici 2 a na pozici 7 dostane jiný posun, a tedy jiný dotaz i klíč.</p>
+
+<p><strong>Proč zrovna sinusoidy — a proč jich je víc.</strong> Podmínku (b) splňují automaticky: $\sin$ a $\cos$ se vždy drží v intervalu $[-1,1]$, ať je pozice jakkoli velká. Podmínku (c) zajišťuje to, že frekvencí je <em>celá škála</em>. Nejnižší $m$ dává rychle se měnící vlnu (sousední pozice se výrazně liší — jemné rozlišení blízkých slov), nejvyšší $m$ dává velmi pomalou vlnu (mění se až přes stovky pozic — hrubé rozlišení vzdálených úseků). Je to jako zápis čísla v poziční soustavě: jednotky se mění rychle, nejvyšší řády pomalu, a teprve <em>všechny řády dohromady</em> jednoznačně určí hodnotu. Díky té sadě měřítek umí model pokrýt krátké i dlouhé závislosti zároveň (Obr. 15).</p>
+</div>
+
+<figure class="diagram">
+<svg viewBox="0 0 700 270" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="ar_pe2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></marker>
+</defs>
+<text class="th" x="350" y="20" text-anchor="middle">Sinusové kanály: od rychlých (jemné rozlišení) k pomalým (hrubé)</text>
+<!-- axes -->
+<line x1="60" y1="70" x2="660" y2="70" stroke="var(--bd)" stroke-width="1"/>
+<line x1="60" y1="140" x2="660" y2="140" stroke="var(--bd)" stroke-width="1"/>
+<line x1="60" y1="210" x2="660" y2="210" stroke="var(--bd)" stroke-width="1"/>
+<!-- fast wave -->
+<path d="M60,70 Q75,45 90,70 T120,70 T150,70 T180,70 T210,70 T240,70 T270,70 T300,70 T330,70 T360,70 T390,70 T420,70 T450,70 T480,70 T510,70 T540,70 T570,70 T600,70 T630,70 T660,70" fill="none" stroke="#1D9E75" stroke-width="2"/>
+<text class="ts" x="60" y="58">malé m — vysoká frekvence (jednotky)</text>
+<!-- mid wave -->
+<path d="M60,140 Q105,100 150,140 T240,140 T330,140 T420,140 T510,140 T600,140 T690,140" fill="none" stroke="#BA7517" stroke-width="2"/>
+<text class="ts" x="60" y="128">střední m — střední frekvence</text>
+<!-- slow wave -->
+<path d="M60,210 Q210,150 360,210 T660,210" fill="none" stroke="#C2410C" stroke-width="2"/>
+<text class="ts" x="60" y="198">velké m — nízká frekvence (nejvyšší „řád“)</text>
+<text class="ts" x="360" y="246" text-anchor="middle">pozice tokenu i →</text>
+<line x1="60" y1="232" x2="660" y2="232" class="arr" stroke="var(--t)" marker-end="url(#ar_pe2)"/>
+</svg>
+<figcaption><b>Obr. 15.</b> Poziční vektor skládá hodnoty z mnoha sinusoid různých frekvencí. Rychlé kanály rozliší sousední pozice, pomalé zachytí polohu v rámci celé sekvence. Teprve <em>kombinace všech měřítek</em> dává jednoznačnou a zároveň ohraničenou „adresu“ pozice — obdoba zápisu čísla po řádech.</figcaption>
+</figure>
+
+<div class="prose">
+<p><strong>Klíčová vlastnost: posun v pozici = rotace.</strong> Proč právě dvojice (sinus, kosinus)? Protože pak má každá frekvenční složka tvar bodu na kružnici, $(\sin\theta_i,\cos\theta_i)$, a posun o $\Delta$ pozic znamená pootočení úhlu o pevný přírůstek $\Delta\cdot\omega_m$.<span class="smallnote"> &nbsp;$\omega_m=1/10000^{\,2m/d}$ — úhlová rychlost $m$-té dvojice; $\theta_i=i\,\omega_m$.</span> Vztah mezi pozicemi $i$ a $i+\Delta$ je tedy v každém kanálu <strong>táž rotace bez ohledu na to, kde v sekvenci jsme</strong> — záleží jen na <em>vzdálenosti</em> $\Delta$, ne na absolutní poloze. To je přesně podmínka (c): model se může naučit operátor „podívej se o dvě pozice zpět“ jako jedno fixní lineární zobrazení, použitelné kdekoli.</p>
+
+<p><strong>Modernější varianta: RoPE.</strong> Sinusové kódování se přičítá k embeddingu na vstupu. Novější rotační poziční kódování — <em>RoPE</em> <a class="cit" href="#ref9">[ref_9]</a> — myšlenku „pozice = rotace“ dotahuje: namísto přičítání vektoru přímo <strong>pootočí</strong> dvojice složek dotazu $q_i$ a klíče $k_j$ o úhel úměrný jejich pozici, ještě <em>uvnitř</em> výpočtu skóre. Skalární součin $q_i\cdot k_j$ pak závisí na pozicích jen přes jejich <em>rozdíl</em> $i-j$ — relativní vzdálenost je tak zabudována přímo do mechaniky pozornosti, ne jen nabídnuta jako vstupní příměs. Díky tomu RoPE lépe zobecňuje na delší sekvence, než jaké model viděl při tréninku, a stal se standardem v řadě dnešních velkých modelů (např. rodina LLaMA).</p>
+</div>
+
+<h2 class="sec" id="sec6"><span class="num">6.</span>Reziduální spojení a jeho hluboký smysl</h2>
+
+<div class="prose">
+<p><strong>Motivace: vrstva pozornosti nemá výsledek nahrazovat, ale doplňovat.</strong> Vrstva pozornosti nám dává korekci $c_i$ (řádek matice $C$). Nabízí se otázka, jak ji použít — <em>nahradit</em> jí původní vektor $x_i$? To je ale zbytečně tvrdé. Embedding tokenu už nese spoustu užitečného (jeho holý význam); vrstva pozornosti k tomu má jen <em>přidat</em> kontext. Kdybychom v každé vrstvě původní reprezentaci přepisovali, riskujeme, že se cestou hlubokou sítí ztratí i to, co bylo správně. Přirozenější je nechat vrstvu počítat jen <strong>opravu</strong> a tu k vstupu přičíst.</p>
+
+<p><strong>Reziduální spojení.</strong> Proto se výstup podvrstvy nepoužije sám o sobě, nýbrž jako přírůstek ke vstupu:</p>
+<p>$$Z \;=\; X \;+\; C,\qquad C=\mathrm{Attn}(X).$$</p>
+<p>Vrstva tedy nemodeluje cílovou reprezentaci $\mathcal{H}(X)$ přímo, ale jen její <em>odchylku</em> od vstupu, <em>reziduum</em> $\mathcal{F}(X)$.<span class="smallnote"> &nbsp;$\mathcal{H}$ — kýžené cílové zobrazení vstupu na výstup; $\mathcal{F}$ — to, co se vrstva opravdu učí, takže $\mathcal{H}(X)=X+\mathcal{F}(X)$. Tato dvě kaligrafická písmena používáme jen zde.</span> Pokud je pro nějaký token nejlepší „nedělat nic“, stačí, aby se vrstva naučila $\mathcal{F}\approx 0$ — tedy nulovou opravu, což je mnohem snazší než naučit husté zobrazení reprodukovat vstup beze změny.</p>
+
+<p><strong>Reziduální proud.</strong> Protože každá podvrstva (pozornost i dopředná síť, viz dále) <em>přičítá</em>, vzniká napříč celou hloubkou sítě jakási páteřní „dálnice“ — <em>reziduální proud</em> — kterou prochází informace, a jednotlivé vrstvy do ní jen postupně <em>zapisují</em> své příspěvky. Gradient se touto dálnicí může při učení propagovat přímo (přičtení má derivaci 1), což je důvod, proč jdou transformerové sítě trénovat i do desítek a stovek vrstev, aniž by signál cestou zanikl.</p>
+
+<p><strong>Historický původ.</strong> Tento trik nevymysleli autoři transformeru. Pochází z <em>reziduálních sítí</em> (ResNet) <a class="cit" href="#ref2">[ref_2]</a>, které jako první ukázaly, že velmi hluboké konvoluční sítě jdou učit právě tehdy, když místo přímého zobrazení necháme vrstvy modelovat reziduum a přidáme zkratková („skip“) spojení. Příbuznou myšlenku — učené brány řídící, kolik informace propustit beze změny — nesly <em>Highway Networks</em> <a class="cit" href="#ref3">[ref_3]</a> a ještě dříve hradlo zapomnění v LSTM <a class="cit" href="#ref4">[ref_4]</a> (Obr. 16).</p>
+</div>
+
+<figure class="diagram">
+<svg viewBox="0 0 700 230" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="ar_res" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></marker>
+</defs>
+<!-- residual stream -->
+<text class="th" x="60" y="40" >X</text>
+<line x1="80" y1="35" x2="300" y2="35" class="arr" stroke="#1D9E75" stroke-width="3" marker-end="url(#ar_res)"/>
+<text class="ts" x="160" y="26">reziduální proud (dálnice)</text>
+<!-- branch down to sublayer -->
+<line x1="150" y1="35" x2="150" y2="90" class="arr" stroke="var(--t)" marker-end="url(#ar_res)"/>
+<g class="c-amber"><rect x="90" y="92" width="120" height="44" rx="6"/></g>
+<text class="t" x="150" y="114" text-anchor="middle" dominant-baseline="central">podvrstva ℱ</text>
+<line x1="150" y1="136" x2="150" y2="168" class="arr" stroke="var(--t)" marker-end="url(#ar_res)"/>
+<text class="t" x="150" y="186" text-anchor="middle">příspěvek (oprava)</text>
+<!-- plus node -->
+<circle cx="300" cy="35" r="14" fill="none" stroke="var(--t)" stroke-width="1.5"/>
+<text class="th" x="300" y="35" text-anchor="middle" dominant-baseline="central">+</text>
+<line x1="220" y1="160" x2="292" y2="48" class="arr" stroke="var(--t)" marker-end="url(#ar_res)"/>
+<line x1="314" y1="35" x2="470" y2="35" class="arr" stroke="#1D9E75" stroke-width="3" marker-end="url(#ar_res)"/>
+<text class="th" x="500" y="40">Z=X+ℱ(X)</text>
+<text class="ts" x="350" y="214" text-anchor="middle">Pokud je nejlepší „nedělat nic“, stačí ℱ≈0 — identita je zadarmo.</text>
+</svg>
+<figcaption><b>Obr. 16.</b> Reziduální spojení. Vstup teče nezměněn po „dálnici“, podvrstva počítá jen opravu $\mathcal{F}(X)$ a ta se přičte. Identitu (ponechat beze změny) získá síť zdarma volbou nulové opravy; gradient se dálnicí propaguje bez útlumu.</figcaption>
+</figure>
+
+<div class="prose">
+<p><strong>Univerzální princip „základ + oprava“.</strong> Stojí za to vidět, že tentýž vzorec — <em>vezmi hrubý odhad a přičti k němu malou korekci</em> — je jeden z nejhlubších a nejopakovanějších motivů v celé matematice a fyzice. Není to náhoda; je to způsob, jak činit složité zvládnutelným:</p>
+<ul>
+<li><strong>Poruchová teorie</strong> ve fyzice: energii složitého systému spočítáme jako energii jednoduchého řešitelného systému <em>plus</em> malou poruchu.</li>
+<li><strong>Taylorův rozvoj</strong>: hodnotu funkce v okolí bodu vyjádříme jako hodnotu v bodě <em>plus</em> postupné korekce vyšších řádů.</li>
+<li><strong>Newtonova metoda</strong> a <strong>Kalmanův filtr</strong>: nový odhad = starý odhad <em>plus</em> korekční člen řízený chybou.</li>
+<li><strong>Gradientní boosting</strong>: silný model = součet mnoha slabých, kde každý další jen <em>opravuje</em> chybu předchozích.</li>
+</ul>
+<p>Reziduální blok dělá přesně totéž v prostoru reprezentací: nese aktuální nejlepší odhad významu a každá vrstva ho o kousek upřesní.</p>
+
+<p><strong>Spojitý pohled: Neural ODE.</strong> Tuto analogii lze dotáhnout do krásného konce. Napíšeme-li jednu vrstvu jako $Z=X+\mathcal{F}(X)$, je to přesně jeden <em>Eulerův krok</em> numerického řešení diferenciální rovnice $\tfrac{dh}{d\ell}=\mathcal{F}(h)$ s krokem 1.<span class="smallnote"> &nbsp;$h$ — reprezentace chápaná jako stav, který se vyvíjí; $\ell$ — index vrstvy v roli „času“.</span> Hluboká reziduální síť je pak diskretizací spojitého toku, kde se reprezentace plynule „proměňuje“ od vstupu k výstupu. Tento pohled formalizují <em>Neural ODE</em> <a class="cit" href="#ref5">[ref_5]</a> a vysvětluje, proč přidávání dalších vrstev působí spíš jako jemnější integrace téhož procesu než jako lepení nesouvislých transformací.</p>
+</div>
+
+<h2 class="sec" id="sec7"><span class="num">7.</span>Dopředná síť (FFN)</h2>
+
+<div class="prose">
+<p><strong>Co vrstva pozornosti neumí.</strong> Vraťme se k tomu, co vlastně vrstva pozornosti dělá: každý výstupní vektor je <em>vážený průměr</em> hodnot $v_j$ ostatních tokenů. Jakkoli chytře volíme váhy, je to pořád jen <strong>lineární kombinace</strong> přečtených vektorů — míchání, nikoli skutečné <em>zpracování</em>. Kdybychom poskládali samé takové vrstvy za sebe, celý model by zůstal (až na softmax ve váhách) v podstatě lineárním mícháním a nedokázal by realizovat složitější rozhodnutí typu „<em>jestli</em> je tohle podmět <em>a zároveň</em> sloveso je v minulém čase, <em>pak</em> …“. K tomu je třeba <strong>nelinearita</strong> a výpočet, který každý token přetaví <em>sám o sobě</em>.</p>
+
+<p><strong>Řešení: dopředná síť aplikovaná na každý token zvlášť.</strong> Za vrstvu pozornosti se proto vkládá <em>dopředná síť</em> (feed-forward network, FFN) — malá dvouvrstvá neuronová síť, která se aplikuje na <strong>každý token nezávisle</strong> (stejné váhy pro všechny pozice). Má tvar „rozšiř → nelinearita → stáhni“:</p>
+<p>$$\mathrm{FFN}(x) \;=\; \mathrm{GELU}\!\big(x\,W_1+b_1\big)\,W_2+b_2.$$</p>
+<p><span class="smallnote">$W_1$ — matice rozšiřující dimenzi z $d$ na $d_{\text{ff}}$; $b_1$ — příslušný bias (posun); $\mathrm{GELU}$ — hladká nelinearita (viz níže); $W_2$ — matice stahující dimenzi z $d_{\text{ff}}$ zpět na $d$; $b_2$ — bias druhé vrstvy. Skrytá šířka $d_{\text{ff}}$ bývá $\approx 4d$ (např. $d=512\Rightarrow d_{\text{ff}}=2048$).</span></p>
+
+<p><strong>Proč zrovna rozšířit a zase stáhnout.</strong> První vrstva promítne $d$-rozměrný vektor do mnohem širšího prostoru o $d_{\text{ff}}\approx 4d$ dimenzích. Každý z těch $d_{\text{ff}}$ neuronů funguje jako <em>detektor jednoho rysu</em>: spočítá skalární součin vstupu se svým váhovým vektorem a nelinearita pak rozhodne, zda se rys „zažehl“, či ne. Teprve v takto rozšířeném prostoru je dost místa, aby vznikla bohatá sada specializovaných detektorů (např. „jde o jednotku hmotnosti“, „toto slovo je sloveso pohybu“, „kontext je technický“). Druhá vrstva pak z aktivních detektorů <em>složí</em> opravu, kterou vrátí do $d$-rozměrného prostoru (Obr. 17).</p>
+</div>
+
+<figure class="diagram">
+<svg viewBox="0 0 700 250" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="ar_ffn" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></marker>
+</defs>
+<!-- input layer -->
+<text class="th" x="70" y="20" text-anchor="middle">d</text>
+<g class="c-teal">
+<circle cx="70" cy="60" r="9"/><circle cx="70" cy="95" r="9"/><circle cx="70" cy="130" r="9"/><circle cx="70" cy="165" r="9"/>
+</g>
+<text class="ts" x="70" y="200" text-anchor="middle">vstup</text>
+<text class="ts" x="70" y="214" text-anchor="middle">(token)</text>
+<!-- wide hidden layer -->
+<text class="th" x="350" y="20" text-anchor="middle">d_ff≈4d</text>
+<g class="c-amber">
+<circle cx="350" cy="40" r="8"/><circle cx="350" cy="68" r="8"/><circle cx="350" cy="96" r="8"/><circle cx="350" cy="124" r="8"/><circle cx="350" cy="152" r="8"/><circle cx="350" cy="180" r="8"/><circle cx="350" cy="208" r="8"/>
+</g>
+<text class="ts" x="350" y="234" text-anchor="middle">skryté detektory rysů + GELU</text>
+<!-- output layer -->
+<text class="th" x="630" y="20" text-anchor="middle">d</text>
+<g class="c-coral">
+<circle cx="630" cy="60" r="9"/><circle cx="630" cy="95" r="9"/><circle cx="630" cy="130" r="9"/><circle cx="630" cy="165" r="9"/>
+</g>
+<text class="ts" x="630" y="200" text-anchor="middle">oprava</text>
+<text class="ts" x="630" y="214" text-anchor="middle">(do reziduálního proudu)</text>
+<!-- connections in (sparse) -->
+<g stroke="var(--bd)" stroke-width="0.5" opacity="0.55">
+<line x1="79" y1="60" x2="342" y2="40"/><line x1="79" y1="60" x2="342" y2="96"/><line x1="79" y1="95" x2="342" y2="68"/><line x1="79" y1="95" x2="342" y2="152"/><line x1="79" y1="130" x2="342" y2="124"/><line x1="79" y1="130" x2="342" y2="208"/><line x1="79" y1="165" x2="342" y2="180"/><line x1="79" y1="165" x2="342" y2="96"/>
+</g>
+<g stroke="var(--bd)" stroke-width="0.5" opacity="0.55">
+<line x1="358" y1="40" x2="621" y2="60"/><line x1="358" y1="68" x2="621" y2="95"/><line x1="358" y1="96" x2="621" y2="130"/><line x1="358" y1="124" x2="621" y2="60"/><line x1="358" y1="152" x2="621" y2="165"/><line x1="358" y1="180" x2="621" y2="130"/><line x1="358" y1="208" x2="621" y2="165"/>
+</g>
+<text class="ts" x="210" y="40" text-anchor="middle">W₁ (rozšíření)</text>
+<text class="ts" x="490" y="40" text-anchor="middle">W₂ (stažení)</text>
+</svg>
+<figcaption><b>Obr. 17.</b> Dopředná síť jako „rozšiř → nelinearita → stáhni“. První vrstva $W_1$ rozprostře token do širokého prostoru detektorů rysů, nelinearita rozhodne, které se zažehly, druhá vrstva $W_2$ z nich složí opravu zpět v dimenzi $d$. Stejné váhy se použijí na každý token zvlášť.</figcaption>
+</figure>
+
+<div class="prose">
+<p><strong>Nelinearita: ReLU a GELU.</strong> Bez nelinearity mezi oběma vrstvami by se $W_1$ a $W_2$ slily v jediné lineární zobrazení a celé rozšíření by ztratilo smysl. Klasická volba je <em>ReLU</em>, $\mathrm{ReLU}(a)=\max(0,a)$ — propustí kladnou část, zápornou utne na nulu, takže detektor je buď „zapnutý“, nebo „vypnutý“. Dnešní modely většinou používají hladší <em>GELU</em>, která kolem nuly přechází plynule a v praxi se učí o něco lépe; pro pochopení principu si ji lze představit jako „měkkou ReLU“.</p>
+
+<p><strong>Konkrétní příklad.</strong> Představme si, že kontext z vrstvy pozornosti naznačil, že token „jeřáb“ vystupuje ve <em>strojírenském</em> smyslu (zvedací zařízení), nikoli jako pták. Jeden z detektorů v první vrstvě může být citlivý právě na kombinaci rysů „<em>jeřáb</em> + technický kontext“ a zažehne se. Druhá vrstva pak na základě tohoto zažehnutí připíše do reprezentace opravu posouvající význam směrem ke „stroji“. Tak FFN dopisuje k tokenu rysy, které z pouhého míchání sousedů nevyplývají.</p>
+
+<p><strong>FFN jako klíč-hodnota paměť.</strong> Tuto úvahu lze zobecnit: řádky $W_1$ fungují jako <em>klíče</em> (každý detekuje určitý vzor ve vstupu) a odpovídající sloupce $W_2$ jako <em>hodnoty</em> (co se při detekci připíše). FFN je tak vlastně asociativní paměť uložená ve váhách — ne nadarmo v ní bývá <strong>uložena většina parametrů</strong> celého modelu (díky faktoru $d_{\text{ff}}\approx 4d$ má dvojice $W_1,W_2$ řádově $8d^2$ parametrů, zatímco celá čtveřice projekcí pozornosti jen $4d^2$). Velká část „znalostí“ modelu tedy nesídlí ve vrstvě pozornosti, ale právě zde.</p>
+
+<p>Stejně jako u vrstvy pozornosti i výstup FFN vstupuje do reziduálního proudu jako <em>přičtená oprava</em>, ne jako náhrada: $Z=X+\mathrm{FFN}(X)$.</p>
+</div>
+
+<h2 class="sec" id="sec8"><span class="num">8.</span>Normalizace: LayerNorm a RMSNorm</h2>
+
+<div class="prose">
+<p><strong>Motivace: udržet čísla v rozumném měřítku.</strong> Reziduální proud má jednu nepříjemnou vlastnost — každá vrstva do něj <em>přičítá</em>, takže velikost vektorů má tendenci postupně narůstat. K tomu se mění i rozsah hodnot podle vstupu. Pokud čísla vstupující do vrstvy pozornosti či do FFN nekontrolovaně kolísají (jednou jsou kolem $0{,}1$, jindy kolem $50$), trénink se stává nestabilním: gradienty buď explodují, nebo mizí, softmax se sytí a síť se učí těžko. Potřebujeme proto před každou podvrstvou reprezentaci <strong>stáhnout na stabilní, předvídatelné měřítko</strong>.</p>
+
+<p><strong>LayerNorm.</strong> Standardním řešením je <em>vrstvová normalizace</em> <a class="cit" href="#ref16">[ref_16]</a>. Pro každý token zvlášť spočítá průměr $\mu$ a směrodatnou odchylku $\sigma$ přes $d$ složek jeho vektoru a vektor přeškáluje na nulový průměr a jednotkový rozptyl:</p>
+<p>$$\hat{x} \;=\; \frac{x-\mu}{\sqrt{\sigma^2+\varepsilon}}, \qquad \mathrm{LN}(x) \;=\; \gamma\odot\hat{x}+\beta.$$</p>
+<p><span class="smallnote">$\mu=\frac1d\sum_k x_k$ — průměr složek daného tokenu; $\sigma^2=\frac1d\sum_k (x_k-\mu)^2$ — jejich rozptyl; $\varepsilon$ — malá konstanta proti dělení nulou; $\gamma$ — naučený vektor měřítka (po složkách); $\beta$ — naučený vektor posunu; $\odot$ — násobení po složkách. Vše se počítá <em>per token</em> přes jeho vlastních $d$ složek, nezávisle na ostatních tokenech.</span></p>
+
+<p><strong>Není to kruh? Nejdřív standardizujeme, pak zase škálujeme a posouváme.</strong> Na první pohled to vypadá jako zbytečné: vektor stáhneme na průměr 0 a rozptyl 1 — a vzápětí ho parametry $\gamma,\beta$ zase přeškálujeme a posuneme. Klíč je v tom, že jde o <strong>dvě různé svobody</strong>. Standardizace odstraní <em>vstupně závislé, nepředvídatelné</em> kolísání měřítka (to, které se mění od tokenu k tokenu a od dávky k dávce). Parametry $\gamma$ a $\beta$ pak dodají <em>stabilní, naučené a vstupně nezávislé</em> měřítko a posun, které jsou pro každou složku pevně dané po tréninku. Nahrazujeme tedy divoké, nekontrolované kolísání kontrolovaným měřítkem, jež se síť může naučit nastavit optimálně — to není kruh, ale výměna chaosu za řád (Obr. 18).</p>
+</div>
+
+<figure class="diagram">
+<svg viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="ar_ln" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></marker>
+</defs>
+<!-- chaotic input bars -->
+<text class="ts" x="90" y="20" text-anchor="middle">vstup: divoké měřítko</text>
+<g class="c-coral">
+<rect x="40" y="70" width="14" height="70" rx="2"/><rect x="60" y="100" width="14" height="40" rx="2"/><rect x="80" y="40" width="14" height="100" rx="2"/><rect x="100" y="110" width="14" height="30" rx="2"/><rect x="120" y="85" width="14" height="55" rx="2"/>
+</g>
+<line x1="35" y1="140" x2="150" y2="140" stroke="var(--bd)"/>
+<line x1="170" y1="100" x2="230" y2="100" class="arr" stroke="var(--t)" marker-end="url(#ar_ln)"/>
+<text class="ts" x="200" y="90" text-anchor="middle">standardizace</text>
+<text class="ts" x="200" y="118" text-anchor="middle">(-μ)/σ</text>
+<!-- normalized bars (uniform-ish around mean) -->
+<text class="ts" x="320" y="20" text-anchor="middle">μ=0, σ=1</text>
+<g class="c-gray">
+<rect x="270" y="80" width="14" height="40" rx="2"/><rect x="290" y="75" width="14" height="50" rx="2"/><rect x="310" y="85" width="14" height="35" rx="2"/><rect x="330" y="78" width="14" height="45" rx="2"/><rect x="350" y="82" width="14" height="38" rx="2"/>
+</g>
+<line x1="265" y1="120" x2="380" y2="120" stroke="var(--bd)"/>
+<line x1="400" y1="100" x2="460" y2="100" class="arr" stroke="var(--t)" marker-end="url(#ar_ln)"/>
+<text class="ts" x="430" y="90" text-anchor="middle">γ⊙ + β</text>
+<text class="ts" x="430" y="118" text-anchor="middle">naučené měřítko</text>
+<!-- output bars (controlled) -->
+<text class="ts" x="560" y="20" text-anchor="middle">stabilní, naučené</text>
+<g class="c-teal">
+<rect x="510" y="70" width="14" height="55" rx="2"/><rect x="530" y="65" width="14" height="60" rx="2"/><rect x="550" y="72" width="14" height="53" rx="2"/><rect x="570" y="68" width="14" height="57" rx="2"/><rect x="590" y="71" width="14" height="54" rx="2"/>
+</g>
+<line x1="505" y1="125" x2="620" y2="125" stroke="var(--bd)"/>
+</svg>
+<figcaption><b>Obr. 18.</b> LayerNorm jako výměna chaosu za řád. Standardizace odstraní nepředvídatelné, vstupně závislé kolísání měřítka; parametry $\gamma,\beta$ pak dodají měřítko stabilní a naučené. Nejde o kruh — odstraňuje se jiná svoboda, než jaká se vrací.</figcaption>
+</figure>
+
+<div class="prose">
+<p><strong>RMSNorm.</strong> Novější a dnes velmi rozšířená varianta <em>RMSNorm</em> <a class="cit" href="#ref17">[ref_17]</a> celý postup zjednodušuje: vynechá odečtení průměru i posun $\beta$ a vektor jen vydělí svou efektivní velikostí (odmocninou z průměru čtverců, RMS):</p>
+<p>$$\mathrm{RMSNorm}(x) \;=\; \frac{x}{\sqrt{\frac1d\sum_k x_k^2+\varepsilon}}\odot\gamma.$$</p>
+<p>Ukázalo se, že hlavní stabilizační efekt obstará právě kontrola velikosti, nikoli centrování na nulu. RMSNorm je proto levnější (méně operací, méně parametrů) a v praxi funguje srovnatelně — proto ji volí mnoho současných velkých modelů.</p>
+
+<p><strong>Pre-norm vs post-norm.</strong> Zbývá rozhodnout, <em>kam</em> normalizaci v bloku umístit. Původní transformer ji dával až <em>za</em> podvrstvu (post-norm). Dnešní modely ji téměř vždy řadí <em>před</em> podvrstvu (pre-norm): $Z=X+\mathrm{Attn}(\mathrm{LN}(X))$. Výhoda je, že reziduální „dálnice“ pak zůstává úplně čistá — normalizace se aplikuje jen na <em>větev</em>, která počítá opravu, kdežto hlavní proud projde beze změny. To dělá hluboké sítě výrazně stabilnějšími při tréninku. Na úplném konci stacku se obvykle přidá ještě jedna závěrečná normalizace, než se reprezentace pošle na výstup.</p>
+</div>
+
+<h2 class="sec" id="sec9"><span class="num">9.</span>Celý transformerový blok</h2>
+
+<div class="prose">
+<p>Teď máme všechny díly a můžeme je složit. <em>Transformerový blok</em> sestává ze dvou podvrstev, z nichž každá je obalena reziduálním spojením a předřazenou normalizací (pre-norm):</p>
+<p>$$Y \;=\; X + \mathrm{MultiHead}\!\big(\mathrm{LN}(X)\big), \qquad Z \;=\; Y + \mathrm{FFN}\!\big(\mathrm{LN}(Y)\big).$$</p>
+<p><span class="smallnote">$X$ — vstup bloku (matice $n\times d$); $Y$ — mezivýsledek po podvrstvě pozornosti; $Z$ — výstup celého bloku; $n$ — počet tokenů; $d$ — dimenze embeddingu.</span></p>
+
+<p>Dělba práce je čistá a stojí za zopakování:</p>
+<ul>
+<li><strong>Pozornost</strong> zajišťuje <em>komunikaci mezi tokeny</em> — každý token si přečte relevantní informace z ostatních (míchání napříč pozicemi).</li>
+<li><strong>FFN</strong> zajišťuje <em>výpočet uvnitř tokenu</em> — nelineárně zpracuje každou pozici zvlášť a dopíše rysy, které z míchání nevyplynou.</li>
+<li><strong>Reziduální spojení</strong> drží průběžný odhad významu a obě podvrstvy do něj jen zapisují opravy.</li>
+<li><strong>Normalizace</strong> drží čísla ve stabilním měřítku, aby šel celý stack vůbec trénovat.</li>
+</ul>
+<p>Tvar vstupu i výstupu bloku je <strong>tentýž</strong> ($n\times d$). To je zásadní: bloky lze proto <em>skládat na sebe</em> do libovolné hloubky, výstup jednoho je vstupem dalšího (Obr. 19).</p>
+</div>
+
+<figure class="diagram">
+<svg viewBox="0 0 700 384" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="ar_blk" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></marker>
+</defs>
+
+<!-- ===== Podvrstva 1: pozornost (zleva doprava) ===== -->
+<text class="ts" x="350" y="22" text-anchor="middle">Podvrstva 1 — pozornost (míchá napříč tokeny)</text>
+<g class="c-gray"><rect x="18" y="74" width="94" height="46" rx="6"/></g>
+<text class="th" x="65" y="92" text-anchor="middle" dominant-baseline="central">X</text>
+<text class="ts" x="65" y="108" text-anchor="middle" dominant-baseline="central">vstup bloku</text>
+<line x1="112" y1="97" x2="142" y2="97" stroke="var(--t)" stroke-width="1.4"/>
+<circle cx="142" cy="97" r="4" fill="var(--t)"/>
+<!-- main path through sublayer -->
+<line x1="142" y1="97" x2="174" y2="97" class="arr" stroke="var(--t)" marker-end="url(#ar_blk)"/>
+<g class="c-gray"><rect x="176" y="79" width="46" height="36" rx="6"/></g><text class="t" x="199" y="97" text-anchor="middle" dominant-baseline="central">LN</text>
+<line x1="222" y1="97" x2="256" y2="97" class="arr" stroke="var(--t)" marker-end="url(#ar_blk)"/>
+<g class="c-amber"><rect x="258" y="75" width="184" height="44" rx="6"/></g>
+<text class="t" x="350" y="91" text-anchor="middle" dominant-baseline="central">Multi-head pozornost</text>
+<text class="ts" x="350" y="107" text-anchor="middle" dominant-baseline="central">spočítá korekci</text>
+<text class="ts" x="468" y="86" text-anchor="middle">korekce C</text>
+<line x1="442" y1="97" x2="494" y2="97" class="arr" stroke="var(--t)" marker-end="url(#ar_blk)"/>
+<!-- adder 1 -->
+<circle cx="512" cy="97" r="15" fill="var(--bg)" stroke="var(--t)" stroke-width="1.6"/><text class="th" x="512" y="97" text-anchor="middle" dominant-baseline="central">+</text>
+<!-- skip 1 -->
+<path d="M142,97 L142,152 L512,152 L512,114" fill="none" stroke="#a39d92" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#ar_blk)"/>
+<text class="ts" x="320" y="166" text-anchor="middle">skip (reziduál) — vstup obejde podvrstvu</text>
+<!-- adder1 -> Y -->
+<line x1="527" y1="97" x2="556" y2="97" class="arr" stroke="var(--t)" marker-end="url(#ar_blk)"/>
+<g class="c-teal"><rect x="558" y="74" width="126" height="46" rx="6"/></g>
+<text class="th" x="621" y="92" text-anchor="middle" dominant-baseline="central">Y = X + C</text>
+<text class="ts" x="621" y="108" text-anchor="middle" dominant-baseline="central">vstup do FFN</text>
+
+<!-- connector down -->
+<line x1="621" y1="120" x2="621" y2="232" class="arr" stroke="var(--t)" marker-end="url(#ar_blk)"/>
+
+<!-- ===== Podvrstva 2: FFN (zprava doleva) ===== -->
+<text class="ts" x="350" y="214" text-anchor="middle">Podvrstva 2 — dopředná síť (počítá uvnitř každého tokenu)</text>
+<circle cx="621" cy="270" r="4" fill="var(--t)"/>
+<line x1="621" y1="270" x2="590" y2="270" class="arr" stroke="var(--t)" marker-end="url(#ar_blk)"/>
+<g class="c-gray"><rect x="542" y="252" width="46" height="36" rx="6"/></g><text class="t" x="565" y="270" text-anchor="middle" dominant-baseline="central">LN</text>
+<line x1="542" y1="270" x2="506" y2="270" class="arr" stroke="var(--t)" marker-end="url(#ar_blk)"/>
+<g class="c-coral"><rect x="320" y="248" width="184" height="44" rx="6"/></g>
+<text class="t" x="412" y="264" text-anchor="middle" dominant-baseline="central">Dopředná síť (FFN)</text>
+<text class="ts" x="412" y="280" text-anchor="middle" dominant-baseline="central">spočítá korekci</text>
+<text class="ts" x="296" y="259" text-anchor="middle">korekce Δ</text>
+<line x1="320" y1="270" x2="270" y2="270" class="arr" stroke="var(--t)" marker-end="url(#ar_blk)"/>
+<!-- adder 2 -->
+<circle cx="250" cy="270" r="15" fill="var(--bg)" stroke="var(--t)" stroke-width="1.6"/><text class="th" x="250" y="270" text-anchor="middle" dominant-baseline="central">+</text>
+<!-- skip 2 -->
+<path d="M621,270 L621,326 L250,326 L250,287" fill="none" stroke="#a39d92" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#ar_blk)"/>
+<text class="ts" x="430" y="340" text-anchor="middle">skip (reziduál) — vstup obejde podvrstvu</text>
+<!-- adder2 -> Z -->
+<line x1="235" y1="270" x2="206" y2="270" class="arr" stroke="var(--t)" marker-end="url(#ar_blk)"/>
+<g class="c-teal"><rect x="78" y="247" width="126" height="46" rx="6"/></g>
+<text class="th" x="141" y="265" text-anchor="middle" dominant-baseline="central">Z = Y + Δ</text>
+<text class="ts" x="141" y="281" text-anchor="middle" dominant-baseline="central">výstup bloku (n×d)</text>
+<line x1="78" y1="270" x2="34" y2="270" class="arr" stroke="var(--t)" marker-end="url(#ar_blk)"/>
+<text class="ts" x="40" y="252" text-anchor="middle">→ další blok</text>
+
+<!-- key note -->
+<text class="ts" x="350" y="372" text-anchor="middle">⊕ je sčítačka se dvěma vstupy: skip (původní vstup) + oprava (korekce podvrstvy)</text>
+</svg>
+<figcaption><b>Obr. 19.</b> Jeden transformerový blok jako dvě stejně stavěné podvrstvy. V každé teče vstup <em>skrz</em> podvrstvu (LN → pozornost, resp. LN → FFN), která z něj spočítá pouze <strong>opravu</strong> (korekci $C$, resp. $\Delta$); původní vstup ji navíc <em>obchází</em> samostatnou větví (skip / reziduál). Kolečko $\oplus$ <strong>není konec výpočtu</strong> — je to <strong>sčítačka se dvěma vstupy</strong>, která skip a opravu sečte. Dopředně se tedy nese vstup a vrstvy do něj jen přičítají své korekce: $X \to Y=X+C \to Z=Y+\Delta$. Vstup i výstup mají týž tvar $n\times d$, takže bloky lze řetězit.</figcaption>
+</figure>
+
+<h2 class="sec" id="sec10"><span class="num">10.</span>Od bloku k jazykovému modelu</h2>
+
+<h3 class="sub" id="sec10-1"><span class="num">10.1</span>Stack vrstev a kvalitativní skok Z<sub>1</sub> → Z<sub>N</sub></h3>
+<div class="prose">
+<p>Jeden transformerový blok umí jeden „kvantový krok“ zpracování. Skutečný model jich naskládá $N$ za sebe (řádově desítky až stovky). Označme výstup $\ell$-té vrstvy $Z_\ell$, takže</p>
+<p>$$X=Z_0 \;\xrightarrow{\text{blok }1}\; Z_1 \;\xrightarrow{\text{blok }2}\; Z_2 \;\to\;\cdots\;\to\; Z_N.$$</p>
+<p><span class="smallnote">$\ell$ — index vrstvy ($\ell=1,\dots,N$); $N$ — celkový počet bloků; $Z_\ell$ — matice reprezentací $n\times d$ na výstupu $\ell$-té vrstvy.</span></p>
+<p><strong>Kvalitativní skok.</strong> Mezi $Z_1$ a $Z_N$ neleží jen „více téhož“. Empiricky platí, že nižší vrstvy zachycují spíš povrchové a lokální jevy (tvar slova, slovní druh, nejbližší vazby), zatímco vyšší vrstvy reprezentují stále abstraktnější a kontextovější obsah (role ve větě, vztažení zájmen, význam celé fráze, záměr). Reprezentace tokenu se cestou stackem mění od „<em>jaké slovo to je</em>“ k „<em>jakou roli to slovo hraje právě v tomto kontextu a co z toho plyne</em>“. Proto nestačí jediný blok: hloubka dovoluje stavět význam po vrstvách, podobně jako poruchová korekce za korekcí zpřesňuje odhad.</p>
+</div>
+
+<h3 class="sub" id="sec10-2"><span class="num">10.2</span>Kauzální maska</h3>
+<div class="prose">
+<p><strong>Motivace: proč vůbec maskovat.</strong> Model trénujeme na předpovídání dalšího tokenu, přesněji řečeno na předpovídání tokenu, který by měl následovat za promptem, který jsme nechali zpracovat neuronovou sítí (LLM). Samotná úloha „uhodni následující token“ kauzální masku <strong>nevynucuje</strong> — bez problémů by fungovala i obousměrná pozornost nad promptem (všechny tokeny v rámci zpracovávaného promptu se vzájemně vidí). Důvod, proč se kauzální maska u těchto predikčních modelů přesto téměř vždy používá je dvojí: <em>efektivita učení</em> a <em>možnost KV-cache</em>.</p>
+
+<p><strong>Důvod 1 — z jediné věty rovnou $n$ učebních vzorů.</strong> Zásadní trik tréninku jazykových modelů je, že z jednoho promptu složeného z $n$ tokenů se vytěží ne jeden, ale rovnou <strong>$n$ učebních příkladů naráz</strong>. To se realizuje tak, že po neuronové síti (primárně v rámci učení) je pro každé $k$ požadováno, aby na základě reprezentace $k$-tého tokenu ($k$-tý řádek finální matice $Z_N$) předpověděla token, který je v promptu na pozici $k+1$. Aby to bylo poctivé a přispělo to správně k učení dané dovednosti, nesmí reprezentace pozice $k$ „vidět“ token $k+1$ (ani žádný pozdější) či jeho reprezentaci, a to v rámci celého průběhu zpracování promptu — jinak by odpověď byla známa předem a neuronová síť by se na těchto učebních vzorech ničemu nenaučila. Přesně to zajišťuje kauzální maska: zaručí, že reprezentace na pozici $k$ závisí jen na tokenech $1,\dots,k$ (či jejich reprezentacích). Jediným průchodem sítě pak spočítáme chybu neuronové sítě pro všech $n$ pozic současně, místo abychom síť pouštěli zvlášť pro každou délku prefixu. Bez masky bychom z jednoho promptu získali jen <em>jeden</em> použitelný vzor (poslední pozici); s maskou jich máme $n$, a učení je tak <strong>řádově efektivnější</strong>.</p>
+
+<div class="box">
+<span class="lab">Příklad — jeden průchod místo několika</span>
+<p>Mějme krátký prompt o <strong>$n=4$</strong> tokenech: <code>Kočka</code> <code>leze</code> <code>dírou</code> <code>&lt;eos&gt;</code>.</p>
+<p><strong>Bez kauzální masky</strong> bychom síti museli předkládat postupně rostoucí prefixy — tedy <strong>tři samostatné dopředné průchody</strong> (forward passes):</p>
+<ol>
+<li>vstup <code>Kočka</code> &nbsp;→&nbsp; predikce <code>leze</code></li>
+<li>vstup <code>Kočka leze</code> &nbsp;→&nbsp; predikce <code>dírou</code></li>
+<li>vstup <code>Kočka leze dírou</code> &nbsp;→&nbsp; predikce <code>&lt;eos&gt;</code></li>
+</ol>
+<p><strong>S kauzální maskou</strong> pošleme do sítě <strong>celou větu naráz</strong> v jediném průchodu. Maska se chová jako „jednosměrné zrcadlo“ v matici vah: každá pozice vidí jen sebe a své předchůdce, takže z její reprezentace lze poctivě předpovědět <em>následující</em> token:</p>
+<ul>
+<li>pozice 1 (<code>Kočka</code>) vidí pouze sebe → síť zde generuje predikci pro pozici 2;</li>
+<li>pozice 2 (<code>leze</code>) vidí <code>Kočka</code>, <code>leze</code> → predikuje pozici 3;</li>
+<li>pozice 3 (<code>dírou</code>) vidí <code>Kočka</code>, <code>leze</code>, <code>dírou</code> → predikuje pozici 4.</li>
+</ul>
+<p>Týmž jediným průchodem tedy vznikne hned několik učebních dvojic místo jediné — a právě v tom je celá úspora.</p>
+</div>
+
+<p><strong>Důvod 2 — KV-cache při generování.</strong> Protože klíče a hodnoty každého tokenu závisejí jen na něm a na tokenech <em>před</em> ním, nikoli na pozdějších, lze je při generování jednou spočítat, <strong>uložit a znovu používat</strong> (KV-cache, sekce 10.5). Bez kauzální struktury by přidání každého nového tokenu změnilo reprezentace všech ostatních a takové cachování by nebylo možné. Maska navíc sjednocuje chování při tréninku a při generování: protože každá pozice vždy závisí jen na své minulosti, model se chová stejně, ať mu předložíme celou větu naráz (trénink), nebo ji necháme generovat token po tokenu (běh).</p>
+
+<p><strong>Řešení: zamaskovat budoucí pozice.</strong> Stačí zasáhnout do matice pozornosti $A$ (vah). Než se na řádky aplikuje softmax, položíme všem zakázaným dvojicím (kde sloupec $j$ leží napravo od řádku $i$, tj. $j>i$) skóre na $-\infty$. Po softmaxu z těchto míst vyjde přesně nula, takže token $i$ rozdělí svou pozornost <em>jen mezi pozice $1\dots i$</em>. Maska tak vynuluje celý <em>horní trojúhelník</em> matice vah (Obr. 20).</p>
+</div>
+
+<figure class="diagram">
+<svg viewBox="0 0 700 240" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="ar_msk" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></marker>
+</defs>
+<text class="th" x="160" y="22" text-anchor="middle">matice vah A (řádek i = dotaz, sloupec j = klíč)</text>
+<!-- 5x5 grid -->
+<g>
+<!-- row labels -->
+<text class="ts" x="30" y="55" >i=1</text><text class="ts" x="30" y="85">i=2</text><text class="ts" x="30" y="115">i=3</text><text class="ts" x="30" y="145">i=4</text><text class="ts" x="30" y="175">i=5</text>
+</g>
+<!-- cells: allowed (teal) lower triangle incl diagonal; masked (gray hatch) upper -->
+<g class="c-teal">
+<rect x="80" y="42" width="26" height="26" rx="3"/>
+<rect x="80" y="72" width="26" height="26" rx="3"/><rect x="110" y="72" width="26" height="26" rx="3"/>
+<rect x="80" y="102" width="26" height="26" rx="3"/><rect x="110" y="102" width="26" height="26" rx="3"/><rect x="140" y="102" width="26" height="26" rx="3"/>
+<rect x="80" y="132" width="26" height="26" rx="3"/><rect x="110" y="132" width="26" height="26" rx="3"/><rect x="140" y="132" width="26" height="26" rx="3"/><rect x="170" y="132" width="26" height="26" rx="3"/>
+<rect x="80" y="162" width="26" height="26" rx="3"/><rect x="110" y="162" width="26" height="26" rx="3"/><rect x="140" y="162" width="26" height="26" rx="3"/><rect x="170" y="162" width="26" height="26" rx="3"/><rect x="200" y="162" width="26" height="26" rx="3"/>
+</g>
+<g class="c-gray" opacity="0.5">
+<rect x="110" y="42" width="26" height="26" rx="3"/><rect x="140" y="42" width="26" height="26" rx="3"/><rect x="170" y="42" width="26" height="26" rx="3"/><rect x="200" y="42" width="26" height="26" rx="3"/>
+<rect x="140" y="72" width="26" height="26" rx="3"/><rect x="170" y="72" width="26" height="26" rx="3"/><rect x="200" y="72" width="26" height="26" rx="3"/>
+<rect x="170" y="102" width="26" height="26" rx="3"/><rect x="200" y="102" width="26" height="26" rx="3"/>
+<rect x="200" y="132" width="26" height="26" rx="3"/>
+</g>
+<text class="ts" x="250" y="58">povoleno (j≤i)</text>
+<rect x="232" y="48" width="12" height="12" rx="2" class="c-teal" />
+<text class="ts" x="250" y="92">zamaskováno (j>i) → 0</text>
+<rect x="232" y="82" width="12" height="12" rx="2" class="c-gray" opacity="0.5"/>
+<!-- arrow to example -->
+<line x1="440" y1="120" x2="490" y2="120" class="arr" stroke="var(--t)" marker-end="url(#ar_msk)"/>
+<text class="th" x="585" y="40" text-anchor="middle">„Jeřáb … zvedal panel“</text>
+<text class="ts" x="585" y="70" text-anchor="middle" width="200">Token „Jeřáb“ na pozici 1</text>
+<text class="ts" x="585" y="88" text-anchor="middle">ještě nevidí „zvedal“;</text>
+<text class="ts" x="585" y="106" text-anchor="middle">jeho smysl (stroj/pták)</text>
+<text class="ts" x="585" y="124" text-anchor="middle">se dořeší až v pozdější</text>
+<text class="ts" x="585" y="142" text-anchor="middle">pozici, která „Jeřáb“ vidí.</text>
+</svg>
+<figcaption><b>Obr. 20.</b> Kauzální maska vynuluje horní trojúhelník matice vah: $k$-tý token míchá informaci jen z pozic $1\dots k$. Víceznačné slovo si proto svůj význam vyjasní až v <em>pozdější</em> pozici, která na ně může „vidět zpět“ — ne naopak.</figcaption>
+</figure>
+
+<div class="prose">
+<p><strong>Obousměrný vs kauzální režim.</strong> Maska je tedy přepínač mezi dvěma filozofiemi. <em>Bez</em> masky je pozornost obousměrná — vhodná pro úlohy, kde máme celý text k dispozici naráz a chceme mu <em>porozumět</em> (klasifikace, hledání odpovědi v textu). To je režim modelů typu BERT <a class="cit" href="#ref7">[ref_7]</a>. <em>S</em> maskou je pozornost kauzální — standardní volba, chceme-li model, který <em>generuje</em> zleva doprava, efektivně se učí a umí KV-cache (viz 10.2). To je režim modelů typu GPT <a class="cit" href="#ref8">[ref_8]</a>. K rodinám architektur se vrátíme v sekci 11.</p>
+</div>
+
+<h3 class="sub" id="sec10-3"><span class="num">10.3</span>Výstup: unembedding, logity, softmax</h3>
+<div class="prose">
+<p><strong>Od reprezentace ke slovu.</strong> Na výstupu posledního bloku máme matici $Z_N$, jejíž každý řádek je bohatá kontextová reprezentace jednoho tokenu. Chceme-li předpovědět <em>další</em> token, vezmeme řádek odpovídající <strong>poslední pozici</strong>, neboť při použití kauzální masky jen on obsahuje kontextovou reprezentaci z celého původního promptu. Označme tento poslední řádek matice $Z_N$ písmenem $z$. Z tohoto řádku musíme vyrobit pravděpodobnosti pro následující token, a to přes celý slovník $\mathcal{V}$.</p>
+
+<p><strong>Unembedding = embedding pozpátku.</strong> Vzpomeňme, že na vstupu tabulka embeddingů $E$ přiřadila každému tokenu vektor. Tady děláme přesný opak: ptáme se, <em>ke kterému tokenu má $z$ nejblíž</em>. Spočítáme proto skalární součin $z$ s vektorem každého tokenu slovníku; výsledkem je vektor <em>logitů</em> $o$ délky $|\mathcal{V}|$:</p>
+<p>$$o \;=\; z\,W_U, \qquad P(i) \;=\; \mathrm{softmax}(o)_i \;=\; \frac{e^{o_i}}{\sum_{j\in\mathcal{V}} e^{o_j}}.$$</p>
+<p><span class="smallnote">$z$ — reprezentace poslední pozice (řádek $Z_N$); $W_U$ — <em>unembedding</em> matice rozměru $d\times|\mathcal{V}|$; $o$ — vektor logitů, $o_i$ je „surové skóre“ $i$-tého tokenu slovníku (index $i$ probíhá celý slovník $\mathcal{V}$, $j$ je sčítací index v jmenovateli softmaxu); $|\mathcal{V}|$ — velikost slovníku; $P(i)$ — pravděpodobnost, že dalším tokenem je token $i$.</span></p>
+
+<p><strong>Weight tying.</strong> Logit tokenu $i$ je tím vyšší, čím lépe $z$ směřuje k vektoru tohoto tokenu. Je proto přirozené vzít za unembedding rovnou <em>transpozici</em> vstupní tabulky embeddingů, $W_U=E^\top$. Tomuto sdílení vah se říká <em>weight tying</em>: šetří parametry a sjednocuje „prostor významů“ na vstupu i výstupu — token se kóduje i dekóduje týmž slovníkem vektorů.</p>
+
+<p><strong>Proč to celé funguje — a proč model neopakuje poslední slovo.</strong> U tohoto kroku se vyplatí zastavit, protože se v něm skrývá jádro celé pozornosti. Vektor $z$ <em>není</em> nějaký abstraktní kontext visící ve vzduchoprázdnu: je to <strong>původní statický embedding posledního tokenu, obohacený o kontext z předchozích slov</strong>. Tento kontext embedding posledního tokenu postupně transformuje — či „ohýbá“ — směrem k embeddingům těch tokenů, které by s vysokou pravděpodobností mohly na zadaný prompt navazovat. Každé slovo vstupuje jako izolovaný vektor z tabulky $E$ — slovo „koruna“ má napřed týž vektor ve větě o králi i ve větě o kurzu měny. Teprve průchodem vrstvami se k němu přes vrstvy pozornosti a reziduální spojení ($z=x+C$, sekce 6) <em>přičítají</em> kousky informace z relevantních slov a jeho směr se posouvá.</p>
+
+<p>Tady se nabízí přirozená obava: když logit počítáme jako skalární součin $z$ s embeddingy slovníku, nezvítězí prostě vždy <em>poslední token sám</em>? U promptu „Britský král Karel III. nastoupil na…“ by to znamenalo absurdní „…na <strong>na</strong>“. Odpověď zní ne — a důvod je poučný: kontext původní token „ohne“ tak silně, že z jeho původní identity zůstane v podstatě jen gramatická kostra a sémantické těžiště se přesune jinam.</p>
+
+<div class="box">
+<span class="lab">Příklad — jak se z „na“ stane „trůn“</span>
+<p>Prompt „Britský král Karel III. nastoupil na…“; posledním tokenem je předložka <code>na</code>. Sledujme její vektor napříč vrstvami (každá přičte svou korekci):</p>
+<ul>
+<li>na <strong>vstupu</strong> je to jen holá předložka <code>na</code> — vektor z tabulky $E$;</li>
+<li>nižší vrstvy ji propojí se slovesem <code>nastoupil</code>;</li>
+<li>další vrstvy přidají kontext <code>král</code> a <code>Britský</code>;</li>
+<li>na výstupu (řádek $z$ v $Z_N$) už vektor svým směrem míří k <em>tomu, na co britský panovník obvykle nastupuje</em>; z původní předložky „na“ v něm zbyla nanejvýš gramatická stopa.</li>
+</ul>
+<p>Že skalární součin nakonec vyhraje <code>trůn</code>, a ne <code>na</code>, zařídí tři věci:</p>
+<ol>
+<li><strong>Akumulace přes rezidua.</strong> Reziduální spojení v každé vrstvě přičítají korekce, takže původní složka „na“ tvoří ve výsledném $z$ jen malý zlomek — reprezentaci dominuje navršený kontext.</li>
+<li><strong>Posun směru.</strong> Geometricky se $z$ stěhuje ze sousedství předložek do oblasti, kde leží slova jako <em>trůn, sedadlo, pozice</em>. Míří tam, kam ho kontext dotlačil, ne tam, odkud vyšel.</li>
+<li><strong>Naučené potlačení opakování.</strong> Z dat se model naučil pravovaznost (valenci): po předložce „na“ následuje podstatné jméno, ne další „na“. Rysy vedoucí k bezprostřednímu opakování proto tlumí a posiluje ty, které míří na očekávaný cíl.</li>
+</ol>
+<p>Skalární součin $z$ s embeddingem slova <code>na</code> proto vyjde nízký (sémanticky už je $z$ jinde), zatímco s <code>trůn</code> vysoký — a softmax z něj udělá vysokou pravděpodobnost. Model vypíše <code>trůn</code>.</p>
+</div>
+
+<p>Tím se vyjasní i dvě elegance celého návrhu. <strong>Zachování pozice:</strong> protože model modifikuje vektor právě na poslední pozici, „ví“, že generuje slovo, které má následovat bezprostředně za ní. <strong>Zachování rozměru:</strong> vektor $z$ má na konci týž rozměr $d$ jako na začátku, takže k němu lze přiložit tentýž slovník $E$ a získat logity jediným skalárním součinem — což je přesně to, co weight tying ($W_U=E^\top$) využívá.</p>
+
+<div class="box">
+<span class="lab">Poznámka k architektuře — sdílet váhy, nebo ne?</span>
+<p>Zda poslední klasifikační vrstvu svázat se vstupní tabulkou ($W_U=E^\top$), nebo jí dát vlastní, nezávisle trénovanou matici, je skutečné návrhové rozhodnutí s citelnými důsledky.</p>
+<p><strong>Se sdílením vah (weight tying).</strong> Model čte i generuje slova v jednom a témže geometrickém prostoru. To přináší velkou úsporu parametrů (a tím i paměti) — u menších modelů tvoří embeddingová matice klidně přes dvě třetiny všech vah — a působí jako silná sémantická regularizace. Daní je tlak na vnitřní vrstvy: ty musí kontextový vektor $z$ ohýbat a transformovat tak krkolomně, aby na konci přesně trefil <em>pevné</em> souřadnice cílového slova v matici $E$. (Výzkum dokonce naznačuje, že sdílená matice se během tréninku přizpůsobuje hlavně své <em>výstupní</em>, predikční roli, poněkud na úkor kvality vstupní reprezentace.) Sdílení vah zavedl už původní Transformer a používá je např. GPT-2, BERT či Gemma.</p>
+<p><strong>Bez sdílení vah (untied embeddings).</strong> Výstupní matice získá plnou autonomii a $d\times|\mathcal{V}|$ nezávislých parametrů navíc — typicky řádově <em>stovky milionů</em> (např. u GPT-3 zhruba 617 milionů; u úplně největších modelů s velkým $d$ i rozsáhlým slovníkem se to blíží miliardě). Vstupní a výstupní vektory téhož tokenu sice zůstávají geometricky velmi blízké, ale výstupní matice se může mírně zdeformovat a jít vnitřním transformacím „naproti“. To ulehčuje předchozím vrstvám onu rigidní geometrickou gymnastiku a dovoluje síti jemněji oddělit <em>sémantické chápání</em> textu na vstupu od <em>gramatických a distribučních zákonitostí</em> generování na výstupu. Za cenu více parametrů jde proto o převažující volbu u dnešních největších modelů — např. LLaMA&nbsp;3, Mistral, OLMo&nbsp;2, DeepSeek-V3 či Qwen3.</p>
+</div>
+</div>
+
+<h3 class="sub" id="sec10-4"><span class="num">10.4</span>Výběr výstupního tokenu</h3>
+<div class="prose">
+<p><strong>Od rozdělení ke konkrétnímu slovu.</strong> Softmax dal pravděpodobnostní rozdělení $P$ přes celý slovník; teď z něj musíme vybrat <em>jeden</em> konkrétní token, který model vypíše. Jsou v tom dvě oddělené otázky: <strong>(1)</strong> jakým mechanismem vůbec z rozdělení vylosujeme jednu hodnotu, a <strong>(2)</strong> jak to rozdělení případně <em>upravíme</em>, abychom řídili poměr mezi spolehlivostí a originalitou. Vyřešme je popořadě.</p>
+
+<p><strong>Nejjednodušší volba: greedy.</strong> Můžeme prostě vzít token s nejvyšší pravděpodobností (argmax). Je to deterministické a rychlé, ale výstup bývá plochý a repetitivní — model sklouzává k nejpravděpodobnějším frázím a opakuje se. Proto se místo toho obvykle <em>vzorkuje</em>: vítězný token se losuje náhodně, ale úměrně své pravděpodobnosti.</p>
+
+<p><strong>Jak se losuje z diskrétního rozdělení (inverzní CDF, „ruleta“).</strong> Mechanismus je úplně obecný — stejný pro libovolnou diskrétní náhodnou veličinu se známým rozdělením. Představme si úsečku délky 1, tedy interval $[0,1)$, a rozdělme ji na tolik dílků, kolik je tokenů, přičemž <strong>délka dílku je rovna pravděpodobnosti</strong> příslušného tokenu. Dílky naskládáme za sebe — hranice mezi nimi jsou vlastně <em>kumulativní součty</em> pravděpodobností. Pak <strong>vylosujeme jedno náhodné číslo $\gamma$</strong> rovnoměrně z $[0,1)$ a podíváme se, <em>do kterého dílku padlo</em>; ten token prohlásíme za vybraný. Formálně vezmeme nejmenší index $i$, pro který kumulativní součet $\sum_{j\le i} P(j) \ge \gamma$ (Obr. 21).</p>
+<p><span class="smallnote">$\gamma$ — náhodné číslo rovnoměrně rozdělené na $[0,1)$; $P(i)$ — pravděpodobnost $i$-tého tokenu (ze sekce 10.3). Token s větší pravděpodobností zabírá delší dílek, takže do něj $\gamma$ padne častěji — proto se losuje <em>úměrně</em> pravděpodobnosti, ne rovnoměrně.</span></p>
+</div>
+
+<figure class="diagram">
+<svg viewBox="0 0 700 226" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="ar_smp" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker>
+</defs>
+<text class="ts" x="350" y="22" text-anchor="middle">úsečka [0, 1) rozdělená na dílky podle pravděpodobností tokenů</text>
+<!-- segments: trůn .55, sedadlo .22, pozici .13, ostatní .10 -->
+<text class="th" x="225" y="86" text-anchor="middle">trůn</text>
+<text class="th" x="456" y="86" text-anchor="middle">sedadlo</text>
+<text class="t" x="561" y="86" text-anchor="middle">pozici</text>
+<text class="ts" x="630" y="86" text-anchor="middle">ostatní</text>
+<g class="c-teal"><rect x="60" y="96" width="330" height="40" rx="3" stroke-width="1"/></g>
+<g class="c-amber"><rect x="390" y="96" width="132" height="40" rx="3" stroke-width="2.6"/></g>
+<g class="c-coral"><rect x="522" y="96" width="78" height="40" rx="3" stroke-width="1"/></g>
+<g class="c-gray"><rect x="600" y="96" width="60" height="40" rx="3" stroke-width="1"/></g>
+<text class="ts" x="225" y="120" text-anchor="middle" dominant-baseline="central">0,55</text>
+<text class="ts" x="456" y="120" text-anchor="middle" dominant-baseline="central">0,22</text>
+<text class="ts" x="561" y="120" text-anchor="middle" dominant-baseline="central">0,13</text>
+<text class="ts" x="630" y="120" text-anchor="middle" dominant-baseline="central">0,10</text>
+<!-- axis endpoints -->
+<line x1="60" y1="136" x2="60" y2="146" stroke="var(--t)" stroke-width="1"/>
+<line x1="660" y1="136" x2="660" y2="146" stroke="var(--t)" stroke-width="1"/>
+<text class="ts" x="60" y="160" text-anchor="middle">0</text>
+<text class="ts" x="660" y="160" text-anchor="middle">1</text>
+<!-- gamma needle at 0.62 -> x=432 -->
+<text class="th" x="432" y="50" text-anchor="middle">γ = 0,62</text>
+<line x1="432" y1="56" x2="432" y2="94" class="arr" stroke="#C2410C" marker-end="url(#ar_smp)"/>
+<circle cx="432" cy="96" r="3" fill="#C2410C"/>
+<!-- result -->
+<text class="ts" x="350" y="190" text-anchor="middle">γ padlo do dílku „sedadlo“ → model vypíše token „sedadlo“ (greedy by vzal největší dílek „trůn“)</text>
+</svg>
+<figcaption><b>Obr. 21.</b> Losování tokenu z rozdělení (inverzní CDF, „ruleta“). Úsečku $[0,1)$ rozdělíme na dílky, jejichž délky jsou pravděpodobnosti jednotlivých tokenů (hranice = kumulativní součty). Vylosujeme náhodné $\gamma\in[0,1)$ a vybereme token, do jehož dílku padlo — zde $\gamma=0{,}62$ padlo do dílku <em>sedadlo</em>. Greedy by naopak vždy vzal největší dílek (<em>trůn</em>); že $\gamma$ může padnout i jinam, je přesně zdroj rozmanitosti výstupu.</figcaption>
+</figure>
+
+<div class="prose">
+<p>Greedy je teď vidět jako mezní případ téhož: kdyby nás zajímala jen jistota, vzali bychom vždy největší dílek. Vzorkováním naopak občas padneme i na slabšího kandidáta — a právě odtud pochází rozmanitost a „kreativita“ výstupu.</p>
+
+<p><strong>Tvarování rozdělení před losováním.</strong> Druhá otázka: <em>než</em> $\gamma$ vylosujeme, můžeme samotné rozdělení $P$ záměrně přetvarovat, a tím řídit, jak odvážné losování bude. Tři páky se běžně kombinují:</p>
+<ul>
+<li><strong>Teplota $T$.</strong> Logity před softmaxem vydělíme číslem $T>0$: $\mathrm{softmax}(o/T)$. Malé $T$ ($&lt;1$) rozdělení <em>zostří</em> (rozdíly mezi pravděpodobnostmi se zvětší — model je konzervativní, jistější volby), velké $T$ ($>1$) ho <em>zploští</em> (rozdíly se smažou — více náhody a kreativity). $T\to 0$ degeneruje přesně v greedy.<span class="smallnote"> &nbsp;$T$ — teplota vzorkování; jediné místo, kde v textu používáme symbol $T$.</span></li>
+<li><strong>Top-$k$.</strong> Ponecháme jen $k$ nejpravděpodobnějších tokenů, zbytku dáme nulu a rozdělení znormujeme. Odřízne dlouhý chvost nesmyslných možností.</li>
+<li><strong>Top-$p$ (nucleus).</strong> Ponecháme nejmenší množinu nejpravděpodobnějších tokenů, jejíž součet pravděpodobností přesáhne práh $p$ (např. $0{,}9$), a opět znormujeme. Velikost množiny se přizpůsobuje — u jisté predikce je malá, u nejisté větší.</li>
+</ul>
+<p>Tvarování (teplota, top-$k$, top-$p$) tedy jen <em>změní tvar úsečky</em> z obrázku — některé dílky zvětší, jiné zmenší či úplně zruší. Vlastní výběr pak vždy proběhne toutéž ruletou: vylosuje se $\gamma$ a vezme se token, do jehož dílku padlo. To je hlavní páka, kterou uživatel ladí rovnováhu mezi spolehlivostí a originalitou výstupu.</p>
+</div>
+
+<h3 class="sub" id="sec10-5"><span class="num">10.5</span>Autoregrese a KV-cache</h3>
+<div class="prose">
+<p><strong>Generování jako smyčka.</strong> Model vygeneruje jeden token, <em>připojí ho na konec vstupu</em> a celý proces zopakuje pro další pozici. Tomuto „výstup se stává dalším vstupem“ se říká <strong>autoregrese</strong>. Takto vzniká text slovo po slovu, dokud nepadne speciální koncový token nebo se nedosáhne limitu délky.</p>
+
+<p><strong>Problém s rychlostí.</strong> Naivně bychom při každém novém tokenu přepočítávali matici pozornosti i celý výstup vrstvy pozornosti pro celou sekvenci znovu — to je práce úměrná $n^2$ pro sekvenci délky $n$, a opakovaně. Přitom klíče $k_j$ a hodnoty $v_j$ <em>již vygenerovaných</em> tokenů se nemění; jen přibývá nový dotaz.</p>
+<p><strong>KV-cache.</strong> Proto si jednou spočtené klíče a hodnoty uložíme do paměti (<em>KV-cache</em>) a při dalším kroku už jen dopočítáme klíč a hodnotu nového tokenu a přidáme je. Náklad na krok tím klesne z $\mathcal{O}(n^2)$ na $\mathcal{O}(n)$ a generování dlouhých textů se stává prakticky proveditelným. To je také důvod, proč je kauzální (nikoli prefixová obousměrná) vrstva pozornosti pro generování tak výhodná — viz poznámka v sekci 11.</p>
+
+<p><strong>Proč minulost zůstává neměnná.</strong> Že se klíče a hodnoty starých tokenů nemění, není samozřejmé — a právě tady se ukazuje, proč KV-cache potřebuje kauzální masku. U <em>první</em> vrstvy je to zřejmé: její $K$ a $V$ vznikají ze statických vstupních embeddingů, které se s příchodem nového slova nemění. Jenže vstupy do <em>druhé a vyšších</em> vrstev jsou samy výstupem vrstvy pozornosti — závisí na okolních tokenech přes matice vah $A$ z vrstev nižších. Bez kauzální masky by příchod nového slova zpětně změnil kontext minulých slov v nižších vrstvách, tím i jejich reprezentace ve vrstvách vyšších, a dříve uložená cache by rázem přestala platit. Kauzální maska ale matematicky zaručuje, že informace teče <strong>jen zleva doprava</strong>: minulost je v čase neměnná, takže jednou spočítané $k$ a $v$ starých tokenů smíme bezpečně uložit a v dalších krocích recyklovat.</p>
+
+<p><strong>Jeden krok generování konkrétně.</strong> Celé autoregresivní generování se pak smrskne na málo práce. Pro nově přidaný token spočítáme — v každé vrstvě — jen jeho vlastní trojici $q, k, v$ a nové $k, v$ ihned připíšeme do cache ke starým. Pak vezmeme <em>jediný</em> nový dotaz $q$ aktuálního tokenu, vynásobíme jím celou matici klíčů $K$ z aktualizované cache; výsledek po škálování a softmaxu dá <em>jeden</em> nový řádek vah pozornosti, kterým přenásobíme matici hodnot $V$. Staré dotazy minulých tokenů už k ničemu nepotřebujeme — vyjadřovaly jen otázky minulých pozic vůči jejich tehdejší minulosti a svou roli dávno splnily. V každém kroku tak lineárními projekcemi projde jen ten jeden nově příchozí token: jeho $q$ poslouží k jedinému novému řádku matice pozornosti a pak ho zahodíme, zatímco $k, v$ zůstávají v paměti pro příští kola.</p>
+</div>
+
+<h3 class="sub" id="sec10-6"><span class="num">10.6</span>Trénink: predikce dalšího tokenu a self-supervision</h3>
+<div class="prose">
+<p><strong>Odkud se berou „správné odpovědi“.</strong> Učení transformeru jako jazykového modelu má geniálně jednoduchý cíl: <em>předpovědět další token</em>. Krása je, že správnou odpověď není třeba ručně anotovat — je jí prostě <strong>skutečně následující token v textu</strong>. Cíle tedy vzniknou z dat samotných posunutím vstupu o jednu pozici; tomu se říká <em>self-supervised</em> učení a umožňuje trénovat na obrovských korpusech bez lidských štítků.</p>
+
+<p><strong>Ztrátová funkce.</strong> Pro každou pozici model vydá rozdělení $P(\cdot)$ a my chceme, aby přiřadilo co největší pravděpodobnost skutečnému dalšímu tokenu $w^\star$. Měříme to <em>křížovou entropií</em>, kterou přes všechny pozice sečteme:</p>
+<p>$$\mathcal{L} \;=\; -\sum_{i} \log P\big(w^\star_i \mid w_1,\dots,w_i\big).$$</p>
+<p><span class="smallnote">$\mathcal{L}$ — ztráta (loss), kterou trénink minimalizuje; $w^\star_i$ — skutečný token následující po pozici $i$; $P(\cdot\mid\cdot)$ — pravděpodobnost predikovaná modelem. Díky kauzální masce lze ztrátu pro <em>všechny</em> pozice spočítat jediným průchodem naráz.</span></p>
+
+<p>Gradienty této ztráty se zpětnou propagací rozešlou do všech vah (projekcí pozornosti, FFN, embeddingů…) a optimalizátor je po malých krocích upravuje. <strong>Kvalita a čistota dat</strong> jsou přitom rozhodující: model se naučí přesně ty vzory, které v korpusu jsou — včetně chyb a zkreslení — takže přípravě a čištění trénovacích dat se věnuje obrovské úsilí.</p>
+</div>
+
+<h2 class="sec" id="sec11"><span class="num">11.</span>Rodiny architektur a proč se modely liší</h2>
+
+<div class="prose">
+<p>Z týchž stavebních dílů — vrstev pozornosti, dopředných sítí, reziduí a normalizací — lze postavit tři velké rodiny modelů. Liší se hlavně tím, <em>jak nastaví pozornost</em> (obousměrná vs kauzální) a <em>jak se trénují</em>.</p>
+
+<p><strong>Encoder-only (obousměrný), např. BERT <a class="cit" href="#ref7">[ref_7]</a>, ViT <a class="cit" href="#ref11">[ref_11]</a>.</strong> Matice pozornosti je bez kauzální masky, každý token vidí celý vstup. Hodí se pro <em>porozumění</em>: klasifikace, hledání odpovědi v textu, příznaky pro další úlohy. Tyto modely se typicky předtrénují úlohou <em>maskovaného jazykového modelování</em> (MLM): v textu se náhodně skryjí některé tokeny a model je má doplnit z obou stran kontextu.</p>
+
+<p><strong>Decoder-only (kauzální), např. GPT <a class="cit" href="#ref8">[ref_8]</a>, LLaMA.</strong> Matice pozornosti má kauzální masku, generuje se zleva doprava. Toto je dnes dominantní rodina velkých jazykových modelů. Trénují se predikcí dalšího tokenu (sekce 10.6); variantou je <em>fill-in-the-middle</em> (FIM), kde se model naučí doplnit vynechaný střed při zachování levopravého generování (užitečné např. při doplňování kódu).</p>
+
+<p><strong>Encoder-decoder, např. T5 <a class="cit" href="#ref18">[ref_18]</a>, BART.</strong> Spojuje obojí: obousměrný enkodér zpracuje vstup (např. větu k překladu) a kauzální dekodér generuje výstup, přičemž přes <em>křížovou pozornost</em> čte reprezentace enkodéru. Přirozené pro úlohy „vstupní sekvence → výstupní sekvence“ (překlad, sumarizace).</p>
+
+<p><strong>Prefix-LM</strong> je mezistupeň: na úvodní „prefix“ (zadání) se dívá obousměrně, na generovanou část kauzálně. Tím se blíží chování enkodér-dekodéru v jediném stacku (Obr. 22).</p>
+</div>
+
+<figure class="diagram">
+<svg viewBox="0 0 700 250" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="ar_fam" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></marker>
+</defs>
+<!-- encoder-only -->
+<text class="th" x="115" y="22" text-anchor="middle">Encoder-only</text>
+<text class="ts" x="115" y="40" text-anchor="middle">obousměrná pozornost</text>
+<g class="c-teal">
+<circle cx="60" cy="80" r="11"/><circle cx="115" cy="80" r="11"/><circle cx="170" cy="80" r="11"/>
+</g>
+<g stroke="#1D9E75" stroke-width="1" opacity="0.7">
+<path d="M71,75 Q87,60 104,75" fill="none" marker-end="url(#ar_fam)"/>
+<path d="M104,85 Q87,100 71,85" fill="none" marker-end="url(#ar_fam)"/>
+<path d="M126,75 Q142,60 159,75" fill="none" marker-end="url(#ar_fam)"/>
+<path d="M159,85 Q142,100 126,85" fill="none" marker-end="url(#ar_fam)"/>
+</g>
+<text class="ts" x="115" y="120" text-anchor="middle">BERT, ViT</text>
+<text class="ts" x="115" y="138" text-anchor="middle">MLM → porozumění</text>
+<!-- decoder-only -->
+<text class="th" x="350" y="22" text-anchor="middle">Decoder-only</text>
+<text class="ts" x="350" y="40" text-anchor="middle">kauzální pozornost</text>
+<g class="c-coral">
+<circle cx="295" cy="80" r="11"/><circle cx="350" cy="80" r="11"/><circle cx="405" cy="80" r="11"/>
+</g>
+<g stroke="#C2410C" stroke-width="1" opacity="0.8">
+<path d="M306,80 L339,80" fill="none" marker-end="url(#ar_fam)"/>
+<path d="M361,80 L394,80" fill="none" marker-end="url(#ar_fam)"/>
+<path d="M306,90 Q350,118 394,90" fill="none" marker-end="url(#ar_fam)"/>
+</g>
+<text class="ts" x="350" y="120" text-anchor="middle">GPT, LLaMA</text>
+<text class="ts" x="350" y="138" text-anchor="middle">další token → generování</text>
+<!-- encoder-decoder -->
+<text class="th" x="585" y="22" text-anchor="middle">Encoder-decoder</text>
+<text class="ts" x="585" y="40" text-anchor="middle">obousm. + kauzální</text>
+<g class="c-teal"><circle cx="540" cy="80" r="11"/><circle cx="585" cy="80" r="11"/></g>
+<g class="c-coral"><circle cx="630" cy="80" r="11"/></g>
+<g stroke="#1D9E75" stroke-width="1" opacity="0.7"><path d="M551,75 Q562,62 574,75" fill="none" marker-end="url(#ar_fam)"/><path d="M574,85 Q562,98 551,85" fill="none" marker-end="url(#ar_fam)"/></g>
+<line x1="596" y1="80" x2="619" y2="80" stroke="#C2410C" stroke-width="1" marker-end="url(#ar_fam)"/>
+<text class="ts" x="585" y="120" text-anchor="middle">T5, BART</text>
+<text class="ts" x="585" y="138" text-anchor="middle">křížová pozornost</text>
+<line x1="40" y1="165" x2="660" y2="165" stroke="var(--bd)"/>
+<text class="ts" x="350" y="190" text-anchor="middle">Prefix-LM: prefix obousměrně, generovaná část kauzálně (mezistupeň).</text>
+<text class="ts" x="350" y="218" text-anchor="middle">Pozn.: obousměrný „prefixový trik“ v dekodéru sice funguje, ale je dražší (𝒪(n²)) a hůře cachovatelný.</text>
+</svg>
+<figcaption><b>Obr. 22.</b> Tři rodiny ze stejných dílů. Rozdíl je především v masce pozornosti a tréninkovém cíli: obousměrné porozumění (encoder), kauzální generování (decoder), a jejich spojení (encoder-decoder).</figcaption>
+</figure>
+
+<div class="prose">
+<p><strong>Proč se konkrétní modely liší výkonem.</strong> Architektura sama je dnes do velké míry ustálená — drtivá většina rozdílů mezi modely téže rodiny <em>neplyne</em> z exotických změn v rovnicích, nýbrž ze čtyř praktických faktorů: <strong>měřítka</strong> (počet parametrů a výpočtu), <strong>množství a kvality dat</strong>, <strong>tréninkového receptu</strong> (optimalizátor, délka učení, regularizace) a <strong>post-tréninku</strong> (doladění na instrukce, sladění s preferencemi). Tatáž kostra tak může vést k velmi odlišně schopným modelům — kouzlo netkví v jiném vzorci, ale v tom, jak velký, na čem a jak pečlivě se model vycvičí.</p>
+</div>
+
+<h2 class="sec" id="sec12"><span class="num">12.</span>Transformer jako obecný procesor sekvencí</h2>
+
+<div class="prose">
+<p><strong>Jádro nezná slova.</strong> Všimněme si zpětně, že v celém mechanismu pozornosti, FFN, reziduí ani normalizací <em>nikde nevystupuje nic specificky jazykového</em>. Vše pracuje s posloupností vektorů a ptá se „kdo s kým souvisí a jak se má reprezentace upravit“. Transformer je tedy <strong>doménově neutrální procesor sekvencí</strong>: jakmile umíme vstup převést na posloupnost vektorů (tokenů), můžeme na něj nasadit tutéž architekturu. Liší se jen <em>tokenizace</em> na vstupu a <em>hlava</em> na výstupu.</p>
+
+<p><strong>Obrazy.</strong> Obrázek se rozřeže na čtvercové dlaždice (<em>patche</em>, např. 16×16 pixelů), každá se lineárně promítne na vektor a vznikne posloupnost — to je <em>Vision Transformer</em> (ViT) <a class="cit" href="#ref11">[ref_11]</a>. Doslova „obrázek za 16×16 slov“.</p>
+
+<p><strong>Zvuk.</strong> Zvukový signál se zakóduje (např. přes naučený diskrétní kódovník, <em>vektorovou kvantizaci</em>) na posloupnost akustických tokenů, s nimiž pak transformer pracuje stejně jako se slovy.</p>
+
+<p><strong>Časové řady.</strong> Zde je voleb několik a stojí za to je porovnat, protože ukazují, jak pružná je sama myšlenka „tokenu“:</p>
+<ul>
+<li><strong>Patche hodnot</strong> — úsek řady (např. 32 po sobě jdoucích měření) se vezme jako jeden token. Tak pracují <em>PatchTST</em> <a class="cit" href="#ref12">[ref_12]</a> i základový model <em>TimesFM</em> <a class="cit" href="#ref13">[ref_13]</a>. Patche zkracují sekvenci a dávají pozornosti rovnou lokální tvar průběhu.</li>
+<li><strong>Diskretizace do binů</strong> — spojitá hodnota se zaokrouhlí do jednoho z konečně mnoha košů, čímž se „slovník“ stane konečným a úloha se převede na klasifikaci dalšího koše (přístup <em>Chronos</em> <a class="cit" href="#ref14">[ref_14]</a>).</li>
+<li><strong>Číslice jako tokeny</strong> — číslo se zapíše jako řetězec číslic a předhodí běžnému jazykovému modelu (<em>LLMTime</em> <a class="cit" href="#ref15">[ref_15]</a>); ukazuje, že i univerzální textový model umí extrapolovat řady.</li>
+<li><strong>Bod po bodu</strong> — starší přístupy braly každý časový krok jako samostatný token; jednoduché, ale dává dlouhé sekvence a slabší zachycení lokálního tvaru.</li>
+</ul>
+
+<p><strong>Výstup nemusí být softmax.</strong> U jazyka jsme výstup hnali přes softmax do pravděpodobností nad slovníkem. U spojitých řad to není nutné. TimesFM například řeší přímou <em>regresi</em>: bere na vstupu patch délky 32 a rovnou predikuje delší budoucí úsek (např. 128 hodnot) tak, že minimalizuje střední kvadratickou chybu (MSE)<span class="smallnote"> &nbsp;MSE — průměr druhých mocnin rozdílů predikce a skutečnosti; $t$ zde značí čas, lokální veličinu této domény.</span> mezi predikcí a skutečností — žádný softmax, žádný slovník. Delší horizonty se pak skládají autoregresivně, patch po patchi. Tatáž kostra, jiná hlava a jiný cíl (Obr. 23).</p>
+</div>
+
+<figure class="diagram">
+<svg viewBox="0 0 700 230" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="ar_dom" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></marker>
+</defs>
+<text class="th" x="110" y="20" text-anchor="middle">různé domény</text>
+<!-- text -->
+<g class="c-teal"><rect x="40" y="40" width="140" height="26" rx="5"/></g><text class="ts" x="110" y="53" text-anchor="middle" dominant-baseline="central">text → BPE tokeny</text>
+<!-- image -->
+<g class="c-amber"><rect x="40" y="74" width="140" height="26" rx="5"/></g><text class="ts" x="110" y="87" text-anchor="middle" dominant-baseline="central">obraz → patche 16×16</text>
+<!-- audio -->
+<g class="c-coral"><rect x="40" y="108" width="140" height="26" rx="5"/></g><text class="ts" x="110" y="121" text-anchor="middle" dominant-baseline="central">zvuk → akustické tokeny</text>
+<!-- series -->
+<g class="c-gray"><rect x="40" y="142" width="140" height="26" rx="5"/></g><text class="ts" x="110" y="155" text-anchor="middle" dominant-baseline="central">řada → patche / biny</text>
+<!-- arrows to common -->
+<g>
+<line x1="185" y1="53" x2="290" y2="100" class="arr" stroke="var(--t)" marker-end="url(#ar_dom)"/>
+<line x1="185" y1="87" x2="290" y2="104" class="arr" stroke="var(--t)" marker-end="url(#ar_dom)"/>
+<line x1="185" y1="121" x2="290" y2="108" class="arr" stroke="var(--t)" marker-end="url(#ar_dom)"/>
+<line x1="185" y1="155" x2="290" y2="112" class="arr" stroke="var(--t)" marker-end="url(#ar_dom)"/>
+</g>
+<!-- common core -->
+<g class="c-teal"><rect x="295" y="78" width="150" height="58" rx="8" stroke-width="1"/></g>
+<text class="th" x="370" y="100" text-anchor="middle" dominant-baseline="central">tentýž</text>
+<text class="th" x="370" y="118" text-anchor="middle" dominant-baseline="central">transformer</text>
+<!-- output heads -->
+<line x1="445" y1="107" x2="510" y2="107" class="arr" stroke="var(--t)" marker-end="url(#ar_dom)"/>
+<g class="c-amber"><rect x="515" y="56" width="160" height="30" rx="5"/></g><text class="ts" x="595" y="71" text-anchor="middle" dominant-baseline="central">softmax → slovník</text>
+<g class="c-coral"><rect x="515" y="92" width="160" height="30" rx="5"/></g><text class="ts" x="595" y="107" text-anchor="middle" dominant-baseline="central">klasifikace třídy</text>
+<g class="c-gray"><rect x="515" y="128" width="160" height="30" rx="5"/></g><text class="ts" x="595" y="143" text-anchor="middle" dominant-baseline="central">regrese (MSE) — bez softmaxu</text>
+<text class="ts" x="370" y="160" text-anchor="middle">liší se jen tokenizace (vlevo) a hlava (vpravo)</text>
+<text class="ts" x="370" y="210" text-anchor="middle">Doménově neutrální jádro: posloupnost vektorů → kontextualizovaná posloupnost vektorů.</text>
+</svg>
+<figcaption><b>Obr. 23.</b> Transformer jako univerzální procesor sekvencí. Vstupní tokenizace a výstupní hlava se mění podle domény, ale jádro zůstává totéž. Výstup nemusí být softmax — u spojitých veličin se používá přímá regrese.</figcaption>
+</figure>
+
+<h2 class="sec" id="sec13"><span class="num">13.</span>Adaptace předtrénovaného modelu</h2>
+
+<div class="prose">
+<p>Předtrénovaný transformer je drahé aktivum — naučil se z obrovských dat bohaté reprezentace. Málokdy chceme začínat od nuly; spíš ho chceme <em>přizpůsobit</em> konkrétní úloze (klasifikace recenzí, rozpoznání nemoci ze snímku, firemní asistent). Podívejme se, jak na to — od nejjednoduššího připojení hlavy až po úsporné doladění vah metodou LoRA.</p>
+</div>
+
+<h3 class="sub" id="sec13-1"><span class="num">13.1</span>Klasifikace, token [CLS] a mean-pooling</h3>
+<div class="prose">
+<p><strong>Problém: jak z posloupnosti vektorů udělat jedno rozhodnutí.</strong> Transformer vrací <em>posloupnost</em> reprezentací (jednu na token), ale klasifikace potřebuje <em>jeden</em> vektor shrnující celý vstup. Jak ho získat?</p>
+<p>Jedna možnost je přidat na začátek vstupu speciální <em>agregační token</em> <code>[CLS]</code>, který sám o sobě nenese význam, ale díky pozornosti do sebe během průchodu „nasaje“ informaci z celé sekvence; jeho výstupní reprezentaci pak pošleme do klasifikační hlavy. Tento trik zavedl BERT <a class="cit" href="#ref7">[ref_7]</a>. Druhá možnost je <em>mean-pooling</em> — prostě zprůměrovat výstupní vektory všech tokenů, tedy řádky finální matice $Z_N$, a tento průměr poslat jako vstup klasifikační hlavě. Token <code>[CLS]</code> tedy není nezbytný; je to jen pohodlný „slot“, kam si model může agregaci uložit.</p>
+
+<p><strong>A co kauzální (generativní) modely?</strong> Token <code>[CLS]</code> i mean-pooling se hodí hlavně pro <em>obousměrné</em> (encoder) modely, kde každý token vidí celý vstup. U kauzálních modelů (GPT, LLaMA) je to jinak: kvůli masce nese kontext z <em>celého</em> promptu jen <strong>poslední token</strong> — jak jsme viděli v sekci 10.3, je to jediný řádek matice $Z_N$, který „prokoukl“ celou sekvenci. Přirozeným shrnujícím vektorem je tu proto právě <strong>reprezentace posledního tokenu</strong>, kterou pošleme do klasifikační hlavy (je to vlastně <code>[CLS]</code> přesunutý na <em>konec</em>). Mean-pooling nebo agregační token na <em>začátku</em> by tu byly slabší — rané tokeny svou pravou stranu nevidí, takže jejich reprezentace jsou ochuzené.</p>
+
+<p><strong>Zvládne kauzální model i analytické úlohy?</strong> Ano, a nabízejí se dvě cesty. První je <em>hlava nad posledním tokenem</em> popsaná výše — model se dotrénuje stejně jako encoder, jen za shrnující vektor bereme poslední pozici. Druhá je <em>generativní klasifikace</em>: úlohu přeformulujeme jako predikci dalšího tokenu, třeba „Recenze: … &nbsp;Sentiment:“, a necháme model dogenerovat slovo <code>kladný</code>, nebo <code>záporný</code>. Tak klasifikují velké jazykové modely <em>bez</em> jakékoli nové hlavy, často i bez dalšího učení (zero-shot). Daní za jednosměrnost je, že úlohy vyžadující plný obousměrný kontext <em>u každého</em> tokenu (např. značkování jednotlivých slov) svědčí spíše encoderům; pro rozhodnutí o <em>celé</em> sekvenci ale kauzálnímu modelu poslední token bohatě stačí — a protože dnes dominují právě dekodérové LLM, klasifikuje se takto zcela běžně.</p>
+</div>
+
+<h3 class="sub" id="sec13-2"><span class="num">13.2</span>Chirurgie: páteř a hlava (full-FT, linear-probe)</h3>
+<div class="prose">
+<p>Adaptace má dvě části: <strong>páteř</strong> (backbone) — předtrénovaný transformer produkující reprezentace — a <strong>výstupní hlavu</strong> (head) — malou novou vrstvu (často jen lineární) převádějící reprezentaci na výstup úlohy; její konkrétní podoba závisí na úloze (hlava klasifikační, regresní, jazyková/čtecí…). Podle toho, co při tréninku necháme měnit, dostáváme spektrum:</p>
+<ul>
+<li><strong>Linear-probe.</strong> Páteř <em>zmrazíme</em> a učíme jen novou hlavu. Velmi levné a rychlé; ověřuje, jak dobré reprezentace páteř už má. Riziko: pokud úloha vyžaduje jiné rysy, než páteř nabízí, narazíme na strop.</li>
+<li><strong>Plné doladění (full fine-tuning).</strong> Uvolníme <em>všechny</em> váhy páteře i hlavy. Nejvyšší strop kvality, ale nejdražší: pro každou úlohu vzniká kompletní kopie všech (často miliard) parametrů a trénink je náročný na paměť i data, navíc hrozí <em>zapomínání</em> původních schopností.</li>
+</ul>
+<p>Mezi těmito extrémy leží otázka: <em>nedá se získat většina kvality plného doladění za zlomek jeho ceny?</em> Odpověď zní ano — a jmenuje se LoRA.</p>
+</div>
+
+<h3 class="sub" id="sec13-3"><span class="num">13.3</span>LoRA — nízkohodnostní doladění</h3>
+<div class="prose">
+<p><strong>Klíčové pozorování.</strong> Když předtrénovaný model doladíme na novou úlohu, <em>změna</em> vah $\Delta W$ oproti původním vahám $W_0$ bývá „jednoduchá“ — leží v překvapivě nízkodimenzionálním podprostoru. Jinak řečeno, $\Delta W$ má (přibližně) <strong>nízkou hodnost</strong> (rank). Metoda <em>LoRA</em> (Low-Rank Adaptation) <a class="cit" href="#ref10">[ref_10]</a> z toho těží: místo abychom učili celou hustou matici změn, vyjádříme ji jako součin dvou <em>úzkých</em> matic.</p>
+
+<p><strong>Konstrukce.</strong> Vyberme některou váhovou matici v modelu — typicky projekce v pozornosti ($W_Q,W_K,W_V,W_O$), případně matice ve FFN — rozměru $d\times d$. Tu <strong>zmrazíme</strong> (necháme $W_0$ beze změny) a přidáme k ní <em>přemostění</em>: dvojici matic</p>
+<p>$$W \;=\; \underbrace{W_0}_{\text{zmrazeno}} \;+\; \Delta W, \qquad \Delta W \;=\; W_{\text{down}}\,W_{\text{up}},$$</p>
+<p>kde <span class="smallnote">$W_0$ — původní (zmrazená) matice; $\Delta W$ — naučený přírůstek; $W_{\text{down}}$ — matice rozměru $d\times r$ stahující vstup do úzkého „hrdla“; $W_{\text{up}}$ — matice rozměru $r\times d$ rozšiřující zpět na $d$; $r$ — <em>rank</em> adaptace, malé číslo (typicky 8 nebo 16), takže $r\ll d$.</span> $W_{\text{down}}$ je rozměru $d\times r$ a $W_{\text{up}}$ rozměru $r\times d$. Vstupní vektor tedy projde dvěma cestami: zmrazenou původní vrstvou <em>a zároveň</em> úzkým přemostěním přes $r$ neuronů, a oba příspěvky se sečtou.</p>
+
+<p><strong>Proč to tak drasticky šetří.</strong> Plné doladění by upravovalo $d\times d$ čísel; LoRA učí jen $d\times r + r\times d = 2dr$ čísel. Pro $d=4096$ a $r=8$ je to pokles z $\sim 16{,}8$ milionu na $\sim 65$ tisíc parametrů na matici — řádově <strong>tisíckrát</strong> méně. Trénovat a uložit pak stačí jen tyto drobné „nálepky“, zatímco mohutná páteř $W_0$ zůstává sdílená a nedotčená. Pro deset různých úloh tak nepotřebujeme deset kopií celého modelu, ale jednu páteř a deset malých LoRA adaptérů (Obr. 24).</p>
+</div>
+
+<figure class="diagram">
+<svg viewBox="0 0 700 320" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="ar_lora" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></marker>
+</defs>
+<text class="th" x="350" y="22" text-anchor="middle">LoRA: přemostění zmrazené vrstvy úzkým „hrdlem“ o r neuronech</text>
+<!-- input layer d neurons -->
+<text class="ts" x="70" y="52" text-anchor="middle">vstup (d)</text>
+<g class="c-teal">
+<circle cx="70" cy="80" r="8"/><circle cx="70" cy="110" r="8"/><circle cx="70" cy="140" r="8"/><circle cx="70" cy="170" r="8"/><circle cx="70" cy="200" r="8"/><circle cx="70" cy="230" r="8"/>
+</g>
+<!-- frozen path: big matrix W0 -->
+<g class="c-gray"><rect x="250" y="70" width="120" height="80" rx="8" stroke-width="1"/></g>
+<text class="th" x="310" y="100" text-anchor="middle" dominant-baseline="central">W₀ (d×d)</text>
+<text class="ts" x="310" y="124" text-anchor="middle" dominant-baseline="central">ZMRAZENO ❄</text>
+<g stroke="var(--bd)" stroke-width="0.5" opacity="0.5">
+<line x1="79" y1="80" x2="249" y2="90"/><line x1="79" y1="110" x2="249" y2="105"/><line x1="79" y1="140" x2="249" y2="120"/><line x1="79" y1="170" x2="249" y2="130"/><line x1="79" y1="200" x2="249" y2="115"/><line x1="79" y1="230" x2="249" y2="100"/>
+</g>
+<!-- bottleneck path: down to r=2 then up -->
+<text class="ts" x="310" y="206" text-anchor="middle">r neuronů (např. 8, 16)</text>
+<g class="c-amber"><circle cx="310" cy="240" r="9"/><circle cx="310" cy="272" r="9"/></g>
+<g stroke="#BA7517" stroke-width="0.7" opacity="0.8">
+<line x1="79" y1="80" x2="301" y2="240"/><line x1="79" y1="110" x2="301" y2="240"/><line x1="79" y1="140" x2="301" y2="272"/><line x1="79" y1="170" x2="301" y2="272"/><line x1="79" y1="200" x2="301" y2="240"/><line x1="79" y1="230" x2="301" y2="272"/>
+</g>
+<text class="ts" x="180" y="290" text-anchor="middle">W_down (d×r): stažení</text>
+<!-- up expansion to output d -->
+<text class="ts" x="560" y="52" text-anchor="middle">výstup (d)</text>
+<g class="c-coral">
+<circle cx="560" cy="80" r="8"/><circle cx="560" cy="110" r="8"/><circle cx="560" cy="140" r="8"/><circle cx="560" cy="170" r="8"/><circle cx="560" cy="200" r="8"/><circle cx="560" cy="230" r="8"/>
+</g>
+<!-- frozen out -->
+<g stroke="var(--bd)" stroke-width="0.5" opacity="0.5">
+<line x1="371" y1="95" x2="551" y2="80"/><line x1="371" y1="105" x2="551" y2="110"/><line x1="371" y1="115" x2="551" y2="140"/><line x1="371" y1="125" x2="551" y2="170"/><line x1="371" y1="135" x2="551" y2="200"/><line x1="371" y1="120" x2="551" y2="230"/>
+</g>
+<!-- up from bottleneck -->
+<g stroke="#C2410C" stroke-width="0.7" opacity="0.85">
+<line x1="319" y1="240" x2="551" y2="80"/><line x1="319" y1="240" x2="551" y2="140"/><line x1="319" y1="240" x2="551" y2="200"/><line x1="319" y1="272" x2="551" y2="110"/><line x1="319" y1="272" x2="551" y2="170"/><line x1="319" y1="272" x2="551" y2="230"/>
+</g>
+<text class="ts" x="450" y="290" text-anchor="middle">W_up (r×d): expanze zpět na dimenzi embeddingu</text>
+<!-- sum node -->
+<circle cx="620" cy="155" r="13" fill="var(--bg)" stroke="var(--t)" stroke-width="1.5"/><text class="th" x="620" y="155" text-anchor="middle" dominant-baseline="central">+</text>
+<line x1="569" y1="120" x2="609" y2="150" class="arr" stroke="var(--t)" marker-end="url(#ar_lora)"/>
+<line x1="569" y1="190" x2="609" y2="160" class="arr" stroke="var(--t)" marker-end="url(#ar_lora)"/>
+<text class="ts" x="640" y="180" >W₀x+ΔWx</text>
+<text class="ts" x="180" y="60" text-anchor="middle">trénuje se jen oranžová + korálová cesta</text>
+</svg>
+<figcaption><b>Obr. 24.</b> LoRA názorně. Původní vrstva $W_0$ ($d\times d$) zůstává <em>zmrazená</em>; paralelně se přidá úzké přemostění: $W_{\text{down}}$ stáhne $d$ vstupů do pouhých $r$ neuronů (typicky 8 nebo 16) a $W_{\text{up}}$ je expanduje zpět na dimenzi embeddingu $d$. Sčítají se výstupy obou cest. Učí se jen drobné matice přemostění — řádově tisíckrát méně parametrů než plné doladění.</figcaption>
+</figure>
+
+<div class="prose">
+<p><strong>Inicializace a měřítko.</strong> Aby model na začátku tréninku odpovídal přesně původnímu (adaptér nesmí hned po startu nic rozbít), inicializuje se $W_{\text{up}}$ na nulu — pak je $\Delta W=0$ a model se chová jako předtrénovaný. Příspěvek se navíc obvykle násobí měřítkem $\alpha/r$, které dovoluje nezávisle ladit „sílu“ adaptace.<span class="smallnote"> &nbsp;$\alpha$ — konstanta měřítka LoRA; poměr $\alpha/r$ řídí, jak velký vliv má adaptér.</span></p>
+
+<p><strong>Žádná režie při nasazení.</strong> Velká přednost: protože $\Delta W=W_{\text{down}}W_{\text{up}}$ je obyčejná matice téhož tvaru jako $W_0$, lze ji po dotrénování jednou provždy <em>přičíst</em> do $W_0$ a uložit jako jedinou matici. Při inferenci pak LoRA nepřidává žádný výpočet navíc — na rozdíl od některých jiných adaptérů je „zdarma“ co do rychlosti.</p>
+
+<p><strong>Účel a limity.</strong> LoRA je dnes standardní nástroj, kdykoli chceme levně specializovat velký model: drobné adaptéry se rychle trénují, málo zabírají a snadno se mezi úlohami přepínají. Má ale i meze. Předpoklad nízké hodnosti platí dobře pro <em>doladění blízko</em> původní úlohy, ale hůře, chceme-li modelu vštípit zcela <em>nové schopnosti či rozsáhlé znalosti</em> — na to malý rank nestačí a je třeba buď zvýšit $r$, adaptovat více vrstev, nebo sáhnout po plném doladění. LoRA tedy skvěle <em>směruje</em> a <em>specializuje</em> už existující schopnosti, ale nenahradí učení toho, co model vůbec neumí.</p>
+</div>
+
+<h3 class="sub" id="sec13-4"><span class="num">13.4</span>„World model“ i u klasifikace</h3>
+<div class="prose">
+<p>Na závěr jedno zdánlivě paradoxní pozorování. Proč i pro pouhou klasifikaci (např. „je tato recenze kladná?“) bývá výhodné vyjít z modelu <em>generativně předtrénovaného</em> na predikci dalšího tokenu? Protože aby model dobře předpovídal, co přijde dál, musí si vybudovat <strong>bohatý vnitřní model světa</strong> — porozumět syntaxi, významu, vztahům, faktům. Tyto reprezentace jsou pak mnohem užitečnější základ pro libovolnou navazující úlohu než cokoli naučeného od nuly na malé klasifikační sadě. Generativní předtrénink není „luxus pro chatboty“; je to způsob, jak levně získat univerzálně použitelné porozumění — a teprve na něm pak postavit konkrétní hlavu, ať už klasifikační, regresní, nebo generativní.</p>
+</div>
+
+<h2 class="sec" id="sec14"><span class="num">14.</span>Závěr</h2>
+<div class="prose">
+<p>Prošli jsme transformer od první motivace až po nasazení a doladění — a stojí za to ohlédnout se za příběhem jako celkem. Začali jsme problémem: starší sítě (rekurentní, konvoluční) buď zpracovávaly sekvenci po krocích a obtížně držely dlouhé závislosti, nebo viděly jen lokální okolí. Transformer na to odpověděl jediným, ale mocným nápadem — <strong>pozorností</strong> — která nechá každý token přímo sáhnout na kterýkoli jiný a přečíst si z něj přesně to, co potřebuje.</p>
+
+<p>Kolem tohoto jádra jsme krok za krokem odhalovali, proč musí existovat každý další díl. <em>Projekce $W_Q,W_K$</em> oddělily relevanci od pouhé podobnosti; <em>$W_V$</em> oddělila, co se čte, od toho, podle čeho se váží; <em>vícehlavá pozornost</em> dovolila sledovat víc vztahů naráz; <em>poziční kódování</em> vrátilo do hry pořadí; <em>reziduální spojení</em> proměnilo vrstvy v posloupnost jemných oprav společného odhadu; <em>FFN</em> dodala nelineární výpočet uvnitř tokenu a uložiště znalostí; <em>normalizace</em> udržela celý hluboký stroj trénovatelný. Složením vznikl blok, jehož opakováním se z povrchových rysů stávají abstraktní významy.</p>
+
+<p>Nakonec jsme viděli, že tatáž kostra je <strong>doménově neutrální</strong>: pracuje s posloupností vektorů, ať pocházejí ze slov, obrazových dlaždic, zvuku či časové řady. Mění se jen tokenizace na vstupu a hlava na výstupu. A protože je předtrénink drahý, naučili jsme se model <em>adaptovat</em> — od připojení hlavy přes plné doladění až po úsporné <em>LoRA</em>, které velký model levně specializuje, aniž bychom sáhli na jeho páteř.</p>
+
+<p>Snad nejdůležitější poznatek je ten, že za zdánlivou složitostí transformeru nestojí změť ad-hoc triků, nýbrž několik opakovaně se vracejících principů — <em>relevance místo podobnosti</em>, <em>základ plus oprava</em>, <em>komunikace mezi tokeny vs výpočet uvnitř tokenu</em>, <em>doménově neutrální posloupnost vektorů</em>. Kdo porozumí těmto principům, přestane vidět změť rovnic a začne vidět architekturu, která dává smysl. To byl cíl tohoto textu; konkrétní rozšíření, optimalizace a varianty už jsou jen dalšími kapitolami téhož příběhu.</p>
+</div>
+
+<h2 class="sec" id="sec15"><span class="num">15.</span>Reference</h2>
+<div class="refs">
+<ol>
+<li id="ref1">Vaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J., Jones, L., Gomez, A. N., Kaiser, Ł., Polosukhin, I. (2017). <em>Attention Is All You Need.</em> Advances in Neural Information Processing Systems (NeurIPS).</li>
+<li id="ref2">He, K., Zhang, X., Ren, S., Sun, J. (2016). <em>Deep Residual Learning for Image Recognition.</em> IEEE Conference on Computer Vision and Pattern Recognition (CVPR).</li>
+<li id="ref3">Srivastava, R. K., Greff, K., Schmidhuber, J. (2015). <em>Highway Networks.</em> arXiv:1505.00387.</li>
+<li id="ref4">Hochreiter, S., Schmidhuber, J. (1997). <em>Long Short-Term Memory.</em> Neural Computation, 9(8), 1735–1780.</li>
+<li id="ref5">Chen, R. T. Q., Rubanova, Y., Bettencourt, J., Duvenaud, D. (2018). <em>Neural Ordinary Differential Equations.</em> Advances in Neural Information Processing Systems (NeurIPS).</li>
+<li id="ref6">Sennrich, R., Haddow, B., Birch, A. (2016). <em>Neural Machine Translation of Rare Words with Subword Units.</em> Annual Meeting of the Association for Computational Linguistics (ACL).</li>
+<li id="ref7">Devlin, J., Chang, M.-W., Lee, K., Toutanova, K. (2019). <em>BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding.</em> NAACL-HLT.</li>
+<li id="ref8">Radford, A., Wu, J., Child, R., Luan, D., Amodei, D., Sutskever, I. (2019). <em>Language Models are Unsupervised Multitask Learners.</em> (GPT-2); Brown, T. B. et al. (2020). <em>Language Models are Few-Shot Learners.</em> NeurIPS (GPT-3).</li>
+<li id="ref9">Su, J., Lu, Y., Pan, S., Wen, B., Liu, Y. (2021). <em>RoFormer: Enhanced Transformer with Rotary Position Embedding.</em> arXiv:2104.09864.</li>
+<li id="ref10">Hu, E. J., Shen, Y., Wallis, P., Allen-Zhu, Z., Li, Y., Wang, S., Wang, L., Chen, W. (2021). <em>LoRA: Low-Rank Adaptation of Large Language Models.</em> arXiv:2106.09685.</li>
+<li id="ref11">Dosovitskiy, A. et al. (2021). <em>An Image is Worth 16×16 Words: Transformers for Image Recognition at Scale.</em> International Conference on Learning Representations (ICLR).</li>
+<li id="ref12">Nie, Y., Nguyen, N. H., Sinthong, P., Kalagnanam, J. (2023). <em>A Time Series is Worth 64 Words: Long-term Forecasting with Transformers.</em> ICLR (PatchTST).</li>
+<li id="ref13">Das, A., Kong, W., Sen, R., Zhou, Y. (2024). <em>A decoder-only foundation model for time-series forecasting.</em> ICML (TimesFM).</li>
+<li id="ref14">Ansari, A. F. et al. (2024). <em>Chronos: Learning the Language of Time Series.</em> arXiv:2403.07815.</li>
+<li id="ref15">Gruver, N., Finzi, M., Qiu, S., Wilson, A. G. (2023). <em>Large Language Models Are Zero-Shot Time Series Forecasters.</em> NeurIPS (LLMTime).</li>
+<li id="ref16">Ba, J. L., Kiros, J. R., Hinton, G. E. (2016). <em>Layer Normalization.</em> arXiv:1607.06450.</li>
+<li id="ref17">Zhang, B., Sennrich, R. (2019). <em>Root Mean Square Layer Normalization.</em> Advances in Neural Information Processing Systems (NeurIPS).</li>
+<li id="ref18">Raffel, C. et al. (2020). <em>Exploring the Limits of Transfer Learning with a Unified Text-to-Text Transformer.</em> Journal of Machine Learning Research (T5).</li>
+</ol>
+</div>
+
+</div>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  var shell = document.getElementById('mm-shell');
+  var readout = document.getElementById('mm-readout');
+  if (!shell || !readout) return;
+  var toks = Array.prototype.slice.call(document.querySelectorAll('.mm-tok'));
+  var cells = Array.prototype.slice.call(document.querySelectorAll('td.mm-cell'));
+  var names = ['Máma','mele','maso'];
+  var nameClass = ['mm-c-mama','mm-c-mele','mm-c-maso'];
+  var W = [[0.41,0.31,0.28],[0.26,0.36,0.39],[0.22,0.36,0.42]];
+  function clearLit(){ cells.forEach(function(c){ c.classList.remove('lit'); }); }
+  function show(row){
+    toks.forEach(function(t){ t.classList.toggle('on', parseInt(t.dataset.tok,10)===row); });
+    if(row<0){
+      shell.classList.remove('dim'); clearLit();
+      readout.innerHTML = 'Čísla v buňkách jsou už hotové <b>váhy</b> (po softmaxu) — každý řádek dává v součtu 1. Klikni na slovo nahoře a sleduj, na co se dívá.';
+      return;
+    }
+    shell.classList.add('dim'); clearLit();
+    cells.forEach(function(c){ if(parseInt(c.dataset.r,10)===row) c.classList.add('lit'); });
+    var w = W[row];
+    var order = [0,1,2].sort(function(a,b){return w[b]-w[a];});
+    var parts = order.map(function(j){
+      var pct = Math.round(w[j]*100);
+      var col = j===0?'var(--mama)':j===1?'var(--mele)':'var(--maso)';
+      return '<span class="mm-chip '+nameClass[j]+'">'+names[j]+'</span> '+pct+'%'
+           + ' <span class="mm-bar" style="width:'+(w[j]*80)+'px;background:'+col+'"></span>';
+    });
+    readout.innerHTML = '<b>'+names[row]+'</b> rozdělí svou pozornost takto:&nbsp; ' + parts.join(' &nbsp; ');
+  }
+  toks.forEach(function(t){
+    var r = parseInt(t.dataset.tok,10);
+    t.addEventListener('click', function(){ show(r); });
+    t.addEventListener('mouseenter', function(){ if(r>=0) show(r); });
+  });
+  show(1);
+});
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  if (!window.renderMathInElement) return;
+  var opts = {
+    delimiters: [
+      {left: "$$", right: "$$", display: true},
+      {left: "$", right: "$", display: false}
+    ],
+    throwOnError: false
+  };
+  document.querySelectorAll(".prose, figure.diagram figcaption, .symtab, .smallnote")
+    .forEach(function (el) { renderMathInElement(el, opts); });
+});
+</script>
+</body></html>
